@@ -1,0 +1,3065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Together</title>
+<meta name="description" content="Everything we need to do, together." />
+<meta name="theme-color" content="#F5F5F7" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Together" />
+<style>
+:root{
+  --bg:#F5F5F7;
+  --surface:#FFFFFF;
+  --surface-2:#FBFBFD;
+  --fill:#E5E5EA;
+  --text:#1D1D1F;
+  --text2:#6E6E73;
+  --text3:#86868B;
+  --nude:#AF52DE;
+  --beige:#FF2D55;
+  --olive:#34C759;
+  --terracotta:#FF9500;
+  --brown:#5856D6;
+  --grey:#86868B;
+  --line:rgba(0,0,0,.09);
+  --danger:#FF3B30;
+  --accent:#0071E3;
+  --system-blue:#007AFF;
+
+  --r-sm:10px;
+  --r-md:16px;
+  --r-lg:22px;
+  --r-xl:28px;
+  --r-pill:999px;
+
+  --sp-xs:4px;
+  --sp-sm:8px;
+  --sp-md:16px;
+  --sp-lg:24px;
+  --sp-xl:32px;
+  --sp-2xl:48px;
+
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.07);
+  --shadow-lg:0 4px 8px rgba(0,0,0,.06), 0 16px 40px rgba(0,0,0,.10);
+  --shadow:var(--shadow-md);
+
+  --dur-fast:120ms;
+  --dur-normal:200ms;
+  --dur-slow:320ms;
+  --ease-standard:cubic-bezier(.32,.72,0,1);
+
+  --nav-h:64px;
+  --safe-b:env(safe-area-inset-bottom, 0px);
+  --safe-t:env(safe-area-inset-top, 0px);
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+button, input, textarea, select{font-family:inherit;}
+button{cursor:pointer;}
+a{color:inherit; text-decoration:none;}
+::-webkit-scrollbar{display:none;}
+
+#app{
+  max-width:560px;
+  margin:0 auto;
+  min-height:100vh;
+  position:relative;
+  padding-top:var(--safe-t);
+}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  padding: var(--sp-md) var(--sp-lg) var(--sp-sm);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.topbar h1{
+  font-size:30px;
+  font-weight:650;
+  letter-spacing:-0.02em;
+  margin:0;
+}
+.topbar .sub{color:var(--text2); font-size:15px; margin-top:2px;}
+.icon-btn{
+  width:40px; height:40px;
+  border-radius:50%;
+  border:none;
+  background:var(--surface);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:var(--shadow);
+  color:var(--text);
+}
+.icon-btn svg{width:20px; height:20px;}
+.back-row{
+  display:flex; align-items:center; gap:var(--sp-sm);
+  padding: var(--sp-md) var(--sp-lg) var(--sp-sm);
+}
+.back-row .title{font-size:20px; font-weight:650; letter-spacing:-0.01em;}
+
+/* ---------- View container ---------- */
+#view{
+  padding: 0 var(--sp-lg) calc(var(--nav-h) + var(--safe-b) + 32px);
+  min-height:60vh;
+}
+.view-plain{padding-bottom: calc(var(--sp-xl));}
+
+/* ---------- Week strip ---------- */
+.week-strip{
+  display:flex;
+  gap:6px;
+  padding: var(--sp-sm) 0 var(--sp-md);
+  overflow-x:auto;
+}
+.week-day{
+  flex:1 0 auto;
+  min-width:42px;
+  text-align:center;
+  border-radius:var(--r-md);
+  padding:8px 4px;
+  background:transparent;
+  border:none;
+  color:var(--text);
+}
+.week-day .dow{font-size:11px; color:var(--text2); font-weight:600; letter-spacing:0.02em;}
+.week-day .dom{font-size:16px; font-weight:600; margin-top:4px;}
+.week-day.active{background:var(--text); color:#fff;}
+.week-day.active .dow{color:rgba(255,255,255,.7);}
+.week-day.today-dot{position:relative;}
+.week-day.today-dot::after{
+  content:"";
+  position:absolute; bottom:3px; left:50%; transform:translateX(-50%);
+  width:4px; height:4px; border-radius:50%;
+  background:var(--accent);
+}
+.week-day.active.today-dot::after{background:#fff;}
+
+/* ---------- Section labels ---------- */
+.section-label{
+  font-size:13px;
+  font-weight:650;
+  color:var(--text2);
+  margin: var(--sp-lg) 0 var(--sp-sm);
+}
+
+/* ---------- Finance ---------- */
+.fin-label{font-size:11px; font-weight:700; color:var(--text2); letter-spacing:.02em;}
+.fin-big{font-size:34px; font-weight:750; letter-spacing:-0.02em; color:var(--text); line-height:1.15;}
+.fin-mid{display:block; font-size:19px; font-weight:700; color:var(--text); margin-top:2px;}
+.fin-hero{padding:20px;}
+.fin-hero-main{margin-bottom:14px;}
+.fin-hero-sub{display:flex; gap:28px; margin-bottom:14px;}
+.fin-status-pill{
+  display:inline-block; font-size:11px; font-weight:750; letter-spacing:.03em;
+  padding:4px 10px; border-radius:20px; background:var(--fill); color:var(--text);
+  margin-bottom:6px;
+}
+.fin-status-pill.attn{background:var(--terracotta); color:#fff;}
+.fin-status-pill.income{background:var(--olive); color:#fff;}
+.fin-status-text{color:var(--text2); margin:0; font-size:14px;}
+.val.income, .fin-mid.income{color:var(--olive);}
+.val.expense, .fin-mid.expense{color:var(--terracotta);}
+.cat-snap-row{padding:8px 0;}
+.cat-snap-top{display:flex; align-items:center; gap:8px; margin-bottom:5px;}
+.cat-snap-top .lbl{flex:1;}
+.cat-snap-bar-bg{height:5px; border-radius:3px; background:var(--fill); overflow:hidden;}
+.cat-snap-bar{height:100%; border-radius:3px;}
+.check-label{display:flex; align-items:center; gap:8px; font-size:15px; color:var(--text); cursor:pointer;}
+.check-label input{width:18px; height:18px;}
+
+/* ---------- Task rows ---------- */
+.task-row{
+  display:flex;
+  align-items:center;
+  gap:var(--sp-md);
+  padding:14px 4px;
+  border-bottom:1px solid var(--line);
+}
+.task-row:last-child{border-bottom:none;}
+.task-time{
+  width:52px;
+  flex:0 0 52px;
+  font-size:14px;
+  font-weight:600;
+  color:var(--text2);
+  line-height:1.3;
+}
+.task-time .end{display:block; font-weight:400; font-size:12px; opacity:.8;}
+.check{
+  width:24px; height:24px;
+  border-radius:50%;
+  border:1.6px solid var(--grey);
+  flex:0 0 24px;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff;
+}
+.check.done{background:var(--olive); border-color:var(--olive);}
+.check svg{width:13px; height:13px; opacity:0; color:#fff;}
+.check.done svg{opacity:1;}
+.task-main{flex:1; min-width:0;}
+.task-title{font-size:16px; font-weight:560; letter-spacing:-0.01em;}
+.task-title.done{color:var(--text2); text-decoration:line-through; text-decoration-color:var(--grey);}
+.task-meta{
+  display:flex; align-items:center; gap:6px;
+  margin-top:3px;
+  font-size:13px;
+  color:var(--text2);
+}
+.dot{width:6px; height:6px; border-radius:50%; flex:0 0 6px;}
+.dot.olive{background:var(--olive);}
+.dot.brown{background:var(--brown);}
+.dot.terracotta{background:var(--terracotta);}
+.dot.beige{background:var(--beige);}
+.dot.nude{background:var(--nude);}
+.dot.grey{background:var(--grey);}
+.pflag{width:7px; height:7px; border-radius:2px; flex:0 0 7px;}
+.pflag.urgent{background:var(--danger);}
+.pflag.high{background:var(--terracotta);}
+.pflag.normal{background:var(--grey);}
+.pflag.low{background:transparent; border:1.4px solid var(--grey);}
+.assignee{
+  font-size:12px; font-weight:650;
+  color:var(--text2);
+  background:var(--fill);
+  border-radius:20px;
+  padding:2px 8px;
+  flex:0 0 auto;
+}
+.row-amount{
+  font-size:13px; font-weight:700;
+  flex:0 0 auto;
+  color:var(--text);
+}
+.row-amount.income{color:var(--olive);}
+.row-amount.expense{color:var(--text2);}
+
+/* ---------- Cards ---------- */
+.card{
+  background:var(--surface);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow);
+  padding:var(--sp-md) var(--sp-lg);
+}
+.upcoming-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:13px 0;
+  border-bottom:1px solid var(--line);
+}
+.upcoming-row:last-child{border-bottom:none;}
+.upcoming-row .d{font-size:15px; font-weight:600;}
+.upcoming-row .c{font-size:14px; color:var(--text2);}
+
+/* ---------- Empty states ---------- */
+.empty{
+  text-align:center;
+  padding: 56px var(--sp-lg) 24px;
+  color:var(--text2);
+}
+.empty h3{font-size:19px; color:var(--text); font-weight:650; margin:0 0 6px; letter-spacing:-0.01em;}
+.empty p{font-size:15px; margin:0; line-height:1.5;}
+
+/* ---------- Bottom nav ---------- */
+.bottom-nav{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  max-width:560px;
+  margin:0 auto;
+  height:calc(var(--nav-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  background:rgba(247,245,242,.88);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);
+  display:flex;
+  z-index:40;
+}
+.nav-item{
+  flex:1;
+  border:none; background:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px;
+  color:var(--text2);
+  font-size:11px;
+  font-weight:600;
+}
+.nav-item svg{width:23px; height:23px;}
+.nav-item.active{color:var(--text);}
+.fab{
+  position:fixed;
+  right:calc((100vw - min(560px, 100vw))/2 + 20px);
+  bottom:calc(var(--nav-h) + var(--safe-b) + 18px);
+  width:58px; height:58px;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  box-shadow:0 8px 24px rgba(0,113,227,.32);
+  display:flex; align-items:center; justify-content:center;
+  z-index:45;
+  transition:transform .15s ease;
+}
+.fab:active{transform:scale(.92);}
+.fab svg{width:26px; height:26px;}
+
+/* ---------- Sheets & full screens ---------- */
+.overlay{
+  position:fixed; inset:0;
+  background:rgba(36,35,33,.32);
+  z-index:60;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease;
+}
+.overlay.show{opacity:1; pointer-events:auto;}
+.sheet{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  max-width:560px;
+  margin:0 auto;
+  background:var(--bg);
+  border-radius:24px 24px 0 0;
+  z-index:61;
+  max-height:88vh;
+  transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.32,.72,0,1);
+  display:flex; flex-direction:column;
+  padding-bottom:var(--safe-b);
+}
+.sheet.show{transform:translateY(0);}
+.sheet-handle{
+  width:36px; height:5px; border-radius:3px;
+  background:var(--grey);
+  margin:10px auto 2px;
+}
+.sheet-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: var(--sp-sm) var(--sp-lg) var(--sp-md);
+}
+.sheet-head .title{font-size:18px; font-weight:650;}
+.sheet-body{overflow-y:auto; padding: 0 var(--sp-lg) var(--sp-lg);}
+.link-btn{border:none; background:none; color:var(--accent); font-weight:600; font-size:15px; padding:6px;}
+
+.fullscreen{
+  position:fixed; inset:0;
+  background:var(--bg);
+  z-index:70;
+  overflow-y:auto;
+  transform:translateY(16px);
+  opacity:0;
+  pointer-events:none;
+  transition:transform .22s ease, opacity .22s ease;
+  padding-top:var(--safe-t);
+}
+.fullscreen.show{transform:translateY(0); opacity:1; pointer-events:auto;}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:var(--sp-lg);}
+.field label{display:block; font-size:13px; font-weight:650; color:var(--text2); margin-bottom:8px;}
+.field input[type=text], .field input[type=date], .field input[type=time], .field textarea, .field input[type=search]{
+  width:100%;
+  border:1px solid var(--line);
+  background:var(--surface);
+  border-radius:var(--r-md);
+  padding:13px 14px;
+  font-size:16px;
+  color:var(--text);
+}
+.field textarea{min-height:88px; resize:vertical;}
+.title-input{
+  width:100%;
+  border:none;
+  background:none;
+  font-size:24px;
+  font-weight:650;
+  letter-spacing:-0.01em;
+  padding:6px 0 14px;
+  border-bottom:1px solid var(--line);
+}
+.title-input::placeholder{color:var(--grey);}
+.title-input:focus, input:focus, textarea:focus{outline:none; border-color:var(--accent);}
+
+.chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+.chip{
+  border:1px solid var(--line);
+  background:var(--surface);
+  border-radius:20px;
+  padding:9px 16px;
+  font-size:14px;
+  font-weight:560;
+  color:var(--text);
+  display:flex; align-items:center; gap:6px;
+}
+.chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+.chip.cat-active{color:#fff; border-color:transparent;}
+
+.btn{
+  width:100%;
+  border:none;
+  border-radius:var(--r-md);
+  padding:16px;
+  font-size:16px;
+  font-weight:650;
+  background:var(--accent);
+  color:#fff;
+}
+.btn:active{opacity:.85;}
+.btn.secondary{background:var(--surface); color:var(--text); box-shadow:var(--shadow);}
+.btn.danger{background:var(--danger); color:#fff;}
+.btn.ghost{background:none; color:var(--text2); box-shadow:none;}
+.btn-row{display:flex; gap:10px;}
+
+/* ---------- Task detail ---------- */
+.detail-hero{padding: var(--sp-sm) 0 var(--sp-lg);}
+.detail-cat{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:13px; font-weight:650; color:var(--text2);
+  margin-bottom:8px;
+}
+.detail-title{font-size:27px; font-weight:680; letter-spacing:-0.02em; line-height:1.2;}
+.detail-when{color:var(--text2); font-size:15px; margin-top:8px;}
+.detail-section{
+  padding: var(--sp-lg) 0;
+  border-top:1px solid var(--line);
+}
+.detail-section h4{
+  font-size:13px; font-weight:650; color:var(--text2); margin:0 0 12px; letter-spacing:0.01em;
+}
+.detail-people{display:flex; gap:8px; flex-wrap:wrap;}
+.person-pill{
+  background:var(--fill); border-radius:20px; padding:7px 14px; font-size:14px; font-weight:600;
+}
+.loc-row{display:flex; align-items:center; justify-content:space-between;}
+.loc-name{font-size:16px; font-weight:600;}
+.loc-addr{color:var(--text2); font-size:14px; margin-top:2px;}
+.maps-link{color:var(--accent); font-weight:650; font-size:14px; white-space:nowrap;}
+.notes-text{font-size:15px; line-height:1.55; white-space:pre-wrap;}
+.checklist-row{display:flex; align-items:center; gap:12px; padding:9px 0;}
+.checklist-title{flex:1; font-size:15px;}
+.checklist-title.done{color:var(--text2); text-decoration:line-through;}
+.progress-track{height:5px; background:var(--line); border-radius:3px; margin-top:10px; overflow:hidden;}
+.progress-fill{height:100%; background:var(--olive);}
+.attach-row{display:flex; align-items:center; gap:12px; padding:10px 0;}
+.attach-icon{
+  width:40px; height:40px; border-radius:10px; background:var(--fill);
+  display:flex; align-items:center; justify-content:center; flex:0 0 40px;
+}
+.attach-icon svg{width:18px; height:18px;}
+.attach-name{font-size:15px; font-weight:560;}
+.attach-size{font-size:12px; color:var(--text2);}
+.detail-actions{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  padding-top:var(--sp-lg);
+}
+
+/* ---------- Calendar ---------- */
+.cal-nav{display:flex; align-items:center; justify-content:space-between; padding:6px 0 var(--sp-md);}
+.cal-nav .month{font-size:19px; font-weight:650; letter-spacing:-0.01em;}
+.cal-grid-head{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; color:var(--text2); font-size:12px; font-weight:650; margin-bottom:6px;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+.cal-cell{
+  min-height:64px;
+  border:none; background:none;
+  display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start;
+  border-radius:12px;
+  font-size:11px;
+  color:var(--text);
+  position:relative;
+  padding:4px 3px 5px;
+  text-align:left;
+  transition:background .12s ease;
+}
+.cal-cell .daynum{font-size:12px; font-weight:650; align-self:center; width:20px; height:20px; line-height:20px; text-align:center; border-radius:50%; margin-bottom:2px;}
+.cal-cell.other-month{color:var(--grey);}
+.cal-cell.other-month .day-event{opacity:.55;}
+.cal-cell.selected{background:var(--fill);}
+.cal-cell.selected .daynum{background:var(--text); color:#fff;}
+.cal-cell.is-today .daynum{background:var(--accent); color:#fff;}
+.cal-cell.drop-target{background:var(--olive); outline:2px solid var(--olive);}
+.day-events{display:flex; flex-direction:column; gap:0; overflow:hidden;}
+.day-event{
+  display:block;
+  font-size:10.5px;
+  line-height:1.35;
+  padding:3.5px 4px;
+  border-radius:5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  background:var(--surface);
+  box-shadow:0 1px 0 rgba(247,245,242,1), 0 1px 1px rgba(36,35,33,.05);
+  touch-action:none;
+  user-select:none; -webkit-user-select:none;
+  cursor:grab;
+}
+.day-event.done{opacity:.45; text-decoration:line-through;}
+.day-event.dragging{opacity:.3;}
+.day-event .t{font-weight:650; color:var(--text2); margin-right:3px;}
+.cal-more{font-size:10px; color:var(--text2); font-weight:650; padding:1px 4px;}
+.drag-ghost{
+  position:fixed; z-index:200; pointer-events:none;
+  background:var(--text); color:#fff;
+  font-size:12px; font-weight:600;
+  padding:8px 14px; border-radius:12px;
+  box-shadow:0 12px 28px rgba(0,0,0,.3);
+  transform:translate(-50%,-120%) scale(1.04);
+  white-space:nowrap;
+}
+.cal-dots{display:flex; gap:2px;}
+.cal-dots .d{width:4px; height:4px; border-radius:50%;}
+.day-schedule{margin-top:var(--sp-lg);}
+.day-schedule h3{font-size:17px; font-weight:650; margin:0 0 6px;}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;
+  left:50%; bottom:calc(var(--nav-h) + var(--safe-b) + 14px);
+  transform:translate(-50%, 20px);
+  background:var(--text); color:#fff;
+  padding:13px 18px;
+  border-radius:16px;
+  font-size:14px;
+  display:flex; align-items:center; gap:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+  z-index:90;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease;
+  max-width:min(480px, 88vw);
+}
+.toast.show{opacity:1; transform:translate(-50%,0); pointer-events:auto;}
+.toast button{background:none; border:none; color:var(--accent); font-weight:700; font-size:14px;}
+
+/* ---------- Segmented control ---------- */
+.segment{display:flex; background:var(--surface); border-radius:12px; padding:3px; box-shadow:var(--shadow);}
+.segment button{flex:1; border:none; background:none; padding:9px 4px; font-size:13px; font-weight:650; color:var(--text2); border-radius:9px;}
+.segment button.active{background:var(--fill); color:var(--text);}
+
+/* ---------- Misc rows (settings/categories) ---------- */
+.list-row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:15px 4px;
+  border-bottom:1px solid var(--line);
+}
+.list-row:last-child{border-bottom:none;}
+.list-row .lbl{flex:1; font-size:16px;}
+.list-row .val{color:var(--text2); font-size:15px;}
+.toggle{
+  width:48px; height:29px; border-radius:20px; background:var(--grey);
+  position:relative; border:none; flex:0 0 48px;
+}
+.toggle.on{background:var(--olive);}
+.toggle .knob{
+  position:absolute; top:2.5px; left:3px;
+  width:24px; height:24px; border-radius:50%; background:#fff;
+  transition:left .15s ease;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.toggle.on .knob{left:21px;}
+
+.onb-wrap{padding: calc(var(--safe-t) + 60px) var(--sp-lg) 40px;}
+.onb-logo{width:64px; height:64px; border-radius:20px; margin-bottom:var(--sp-lg);}
+.onb-wrap h1{font-size:32px; font-weight:700; letter-spacing:-0.02em; margin:0 0 8px;}
+.onb-wrap p.tag{color:var(--text2); font-size:16px; margin:0 0 40px;}
+.onb-wrap .btn{margin-top:8px;}
+.spacer{height:0;}
+.skip-link{text-align:center; color:var(--text2); font-size:14px; padding:16px;}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important; animation:none !important;}
+}
+
+/* hide scrollbars on horizontal strips but keep scroll */
+.week-strip::-webkit-scrollbar, .sheet-body::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="ic-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v4l2.6 2.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="ic-tasks" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4 9.7h16M8 3.5v3.4M16 3.5v3.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="ic-more" viewBox="0 0 24 24"><circle cx="5.2" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="18.8" cy="12" r="1.6" fill="currentColor"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+<symbol id="ic-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+<symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+<symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="ic-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 21s7-7.2 7-12a7 7 0 10-14 0c0 4.8 7 12 7 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="9" r="2.3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+<symbol id="ic-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 1112 0c0 4 1.4 5.4 2 6H4c.6-.6 2-2 2-6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 005 0" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+<symbol id="ic-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a1 1 0 01-1 1H7a1 1 0 01-1-1V4.5a1 1 0 011-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3.5V8h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="ic-img" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5 17l5-5 3.5 3.5L17 12l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="ic-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V5a1 1 0 011-1h3a1 1 0 011 1v2M7 7l1 12.5a1 1 0 001 1h6a1 1 0 001-1L17 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20l.9-3.6L15.6 5.7a1.5 1.5 0 012.1 0l1.6 1.6a1.5 1.5 0 010 2.1L8.6 20 4 20z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="ic-copy" viewBox="0 0 24 24"><rect x="4" y="4" width="12" height="12" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 20h9a2 2 0 002-2V9" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="ic-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+<symbol id="ic-add-small" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 8.4v7.2M8.4 12h7.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="ic-wallet" viewBox="0 0 24 24"><path d="M4 7.5a2 2 0 012-2h11a1 1 0 011 1V8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="3" y="7.5" width="18" height="12.5" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="16.2" cy="13.8" r="1.3" fill="currentColor"/></symbol>
+</defs>
+</svg>
+
+<div id="app">
+  <div id="view"></div>
+  <nav class="bottom-nav" id="bottomNav"></nav>
+  <button class="fab" id="fab" aria-label="Create task"><svg><use href="#ic-plus"/></svg></button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet"><div class="sheet-handle"></div><div id="sheetContent"></div></div>
+<div class="fullscreen" id="fullscreen"><div id="fullscreenContent"></div></div>
+<div class="toast" id="toast"></div>
+<div id="errBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#B95C50;color:#fff;padding:10px 16px;font:13px -apple-system,sans-serif;line-height:1.4;"></div>
+
+<script>
+/* =========================================================
+   TOGETHER — local-first PWA
+   Single JS file: IndexedDB layer, state, router, views.
+   ========================================================= */
+
+/* ---------------- Visible error reporting (so failures are never silent) ---------------- */
+function showErrorBanner(msg) {
+  try {
+    const el = document.getElementById("errBanner");
+    if (!el) return;
+    el.textContent = "Something went wrong: " + msg + " (tap to dismiss)";
+    el.style.display = "block";
+    el.onclick = () => { el.style.display = "none"; };
+  } catch (e) { /* ignore */ }
+}
+window.addEventListener("error", (e) => showErrorBanner(e.message || String(e.error)));
+window.addEventListener("unhandledrejection", (e) => showErrorBanner((e.reason && e.reason.message) || String(e.reason)));
+
+/* ---------------- IndexedDB layer ---------------- */
+const DB_NAME = "together-db";
+const DB_VERSION = 3;
+let dbInstance = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("tasks")) {
+        const s = db.createObjectStore("tasks", { keyPath: "id" });
+        s.createIndex("startDate", "startDate");
+        s.createIndex("status", "status");
+      }
+      if (!db.objectStoreNames.contains("categories")) {
+        db.createObjectStore("categories", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("settings")) {
+        db.createObjectStore("settings", { keyPath: "key" });
+      }
+      if (!db.objectStoreNames.contains("accounts")) {
+        db.createObjectStore("accounts", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("balanceSnapshots")) {
+        db.createObjectStore("balanceSnapshots", { keyPath: "monthKey" });
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function tx(storeName, mode) {
+  return dbInstance.transaction(storeName, mode).objectStore(storeName);
+}
+function idbGetAll(storeName) {
+  return new Promise((resolve, reject) => {
+    const r = tx(storeName, "readonly").getAll();
+    r.onsuccess = () => resolve(r.result || []);
+    r.onerror = () => reject(r.error);
+  });
+}
+function idbGet(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const r = tx(storeName, "readonly").get(key);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+function idbPut(storeName, val) {
+  return new Promise((resolve, reject) => {
+    const r = tx(storeName, "readwrite").put(val);
+    r.onsuccess = () => resolve(val);
+    r.onerror = () => reject(r.error);
+  });
+}
+function idbDelete(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const r = tx(storeName, "readwrite").delete(key);
+    r.onsuccess = () => resolve();
+    r.onerror = () => reject(r.error);
+  });
+}
+function idbClear(storeName) {
+  return new Promise((resolve, reject) => {
+    const r = tx(storeName, "readwrite").clear();
+    r.onsuccess = () => resolve();
+    r.onerror = () => reject(r.error);
+  });
+}
+
+/* ---------------- Utilities ---------------- */
+function uid() {
+  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+function isoToDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function addDaysISO(iso, n) {
+  const d = isoToDate(iso);
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+function addMonthsISO(iso, n) {
+  const d = isoToDate(iso);
+  d.setMonth(d.getMonth() + n);
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function weekdayShort(iso) { return WEEKDAYS_SHORT[isoToDate(iso).getDay()]; }
+function weekdayLong(iso) { return WEEKDAYS_LONG[isoToDate(iso).getDay()]; }
+function dayOfMonth(iso) { return isoToDate(iso).getDate(); }
+function monthLong(iso) { return MONTHS_LONG[isoToDate(iso).getMonth()]; }
+function monthStartISO(iso) { const d = isoToDate(iso); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-01"; }
+function monthEndISO(iso) { return addDaysISO(addMonthsISO(monthStartISO(iso), 1), -1); }
+function daysInMonthISO(iso) { return dayOfMonth(monthEndISO(iso)); }
+function fmtDateHeading(iso) {
+  return { weekday: weekdayLong(iso), dayMonth: dayOfMonth(iso) + " " + monthLong(iso) };
+}
+function fmtTime(t) { return t || ""; }
+function isSameISO(a, b) { return a === b; }
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+function escapeHtml(str) {
+  return (str || "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+function fileSizeLabel(bytes) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+function isLikelyUrl(v) {
+  return /^https?:\/\//i.test((v || "").trim());
+}
+// Whole euros unless there are real cents, so "€72" stays clean but "€72.50" isn't rounded away.
+function fmtMoney(n) {
+  const v = Number(n) || 0;
+  const abs = Math.abs(v);
+  const hasCents = Math.round(abs * 100) % 100 !== 0;
+  const body = abs.toLocaleString("pt-PT", { minimumFractionDigits: hasCents ? 2 : 0, maximumFractionDigits: 2 });
+  return (v < 0 ? "\u2212" : "") + "\u20ac" + body;
+}
+function fmtMoneySigned(n) {
+  const v = Number(n) || 0;
+  return (v > 0 ? "+" : "") + fmtMoney(v);
+}
+function extractPlaceNameFromMapsUrl(url) {
+  try {
+    const u = new URL(url);
+    const placeMatch = u.pathname.match(/\/place\/([^/]+)/);
+    if (placeMatch) return decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
+    const q = u.searchParams.get("q") || u.searchParams.get("query") || u.searchParams.get("daddr");
+    if (q) return decodeURIComponent(q.replace(/\+/g, " "));
+  } catch (e) { /* not a parseable absolute URL */ }
+  return null;
+}
+
+/* ---------------- Default data ---------------- */
+// tracksMoney controls whether the Amount field appears when creating/editing
+// a task in this category, and whether it's included in financial dashboard
+// totals. Adjustable per-category (including these defaults) from
+// More -> Categories -> edit.
+const DEFAULT_CATEGORIES = [
+  { id: "family",       name: "Family",       color: "olive",      tracksMoney: false },
+  { id: "school",       name: "School",       color: "brown",      tracksMoney: true },
+  { id: "groceries",    name: "Groceries",    color: "terracotta", tracksMoney: true },
+  { id: "dinner",       name: "Dinner",       color: "terracotta", tracksMoney: true },
+  { id: "dayout",       name: "Day Out",      color: "olive",      tracksMoney: false },
+  { id: "trips",        name: "Trips",        color: "olive",      tracksMoney: true },
+  { id: "holidays",     name: "Holidays",     color: "terracotta", tracksMoney: true },
+  { id: "home",         name: "Home",         color: "beige",      tracksMoney: true },
+  { id: "car",          name: "Car",          color: "brown",      tracksMoney: true },
+  { id: "finance",      name: "Finance",      color: "brown",      tracksMoney: true },
+  { id: "appointments", name: "Appointments", color: "nude",       tracksMoney: true },
+  { id: "personal",     name: "Personal",     color: "nude",       tracksMoney: false },
+  { id: "shopping",     name: "Shopping",     color: "terracotta", tracksMoney: true },
+  { id: "other",        name: "Other",        color: "grey",       tracksMoney: false },
+];
+
+const PRIORITIES = ["urgent", "high", "normal", "low"];
+const PRIORITY_LABEL = { urgent: "Urgent", high: "High", normal: "Normal", low: "Low" };
+const REMINDER_OPTIONS = [
+  { minutes: 0, label: "At task time" },
+  { minutes: 5, label: "5 minutes before" },
+  { minutes: 10, label: "10 minutes before" },
+  { minutes: 15, label: "15 minutes before" },
+  { minutes: 30, label: "30 minutes before" },
+  { minutes: 60, label: "1 hour before" },
+  { minutes: 120, label: "2 hours before" },
+  { minutes: 1440, label: "1 day before" },
+];
+
+/* ---------------- Global state ---------------- */
+const S = {
+  settings: null,
+  categories: [],
+  tasks: [],
+  accounts: [],
+  route: "#/today",
+  calMonthAnchor: todayISO(),
+  calSelected: todayISO(),
+  financeMonthAnchor: todayISO(),
+  balanceSnapshots: [],
+  todaySelected: todayISO(),
+  tasksFilter: { person: "all", priority: null, category: null, status: null, date: null },
+  tasksGroup: "date",
+  tasksSort: "datetime",
+  tasksSearch: "",
+  notifiedKeys: new Set(),
+  lastBriefingDate: null,
+};
+window.S = S; // exposed for debugging in devtools
+
+function catById(id) { return S.categories.find((c) => c.id === id) || DEFAULT_CATEGORIES[DEFAULT_CATEGORIES.length - 1]; }
+function personLabel(assignedTo) {
+  const names = S.settings.names;
+  if (assignedTo === "sergio") return names.sergio;
+  if (assignedTo === "rita") return names.rita;
+  return "Both";
+}
+function personShort(assignedTo) {
+  if (assignedTo === "both") return "Both";
+  return personLabel(assignedTo);
+}
+
+/* ---------------- Data access / CRUD ---------------- */
+async function loadAll() {
+  S.categories = await idbGetAll("categories");
+  S.tasks = await idbGetAll("tasks");
+  S.accounts = await idbGetAll("accounts");
+  S.balanceSnapshots = await idbGetAll("balanceSnapshots");
+  await migrateCategoriesTracksMoney();
+}
+
+// One-time backfill for installs created before financial tracking existed:
+// their saved categories predate the `tracksMoney` field entirely.
+async function migrateCategoriesTracksMoney() {
+  for (const c of S.categories) {
+    if (typeof c.tracksMoney !== "boolean") {
+      const def = DEFAULT_CATEGORIES.find((d) => d.id === c.id);
+      c.tracksMoney = def ? def.tracksMoney : false;
+      await idbPut("categories", c);
+    }
+  }
+}
+
+async function saveTask(task) {
+  task.updatedAt = Date.now();
+  await idbPut("tasks", task);
+  const idx = S.tasks.findIndex((t) => t.id === task.id);
+  if (idx >= 0) S.tasks[idx] = task; else S.tasks.push(task);
+  return task;
+}
+
+async function deleteTaskById(id) {
+  await idbDelete("tasks", id);
+  S.tasks = S.tasks.filter((t) => t.id !== id);
+}
+
+// Deletes every task in a recurring series from a given date onward
+// (inclusive) \u2014 used for "delete this and future occurrences".
+async function deleteRecurrenceOnward(recurrenceId, fromDateIso) {
+  const toDelete = S.tasks.filter((t) => t.recurrenceId === recurrenceId && t.startDate >= fromDateIso);
+  for (const t of toDelete) await deleteTaskById(t.id);
+  return toDelete.length;
+}
+
+async function saveCategory(cat) {
+  await idbPut("categories", cat);
+  const idx = S.categories.findIndex((c) => c.id === cat.id);
+  if (idx >= 0) S.categories[idx] = cat; else S.categories.push(cat);
+}
+
+async function saveAccount(acc) {
+  acc.updatedAt = Date.now();
+  await idbPut("accounts", acc);
+  const idx = S.accounts.findIndex((a) => a.id === acc.id);
+  if (idx >= 0) S.accounts[idx] = acc; else S.accounts.push(acc);
+  return acc;
+}
+
+async function deleteAccountById(id) {
+  await idbDelete("accounts", id);
+  S.accounts = S.accounts.filter((a) => a.id !== id);
+}
+
+function monthKeyOf(iso) { return iso.slice(0, 7); }
+function getSnapshot(monthKey) { return S.balanceSnapshots.find((s) => s.monthKey === monthKey) || null; }
+async function saveBalanceSnapshot(monthKey, amount) {
+  const snap = { monthKey, amount: Number(amount), recordedAt: Date.now() };
+  await idbPut("balanceSnapshots", snap);
+  const idx = S.balanceSnapshots.findIndex((s) => s.monthKey === monthKey);
+  if (idx >= 0) S.balanceSnapshots[idx] = snap; else S.balanceSnapshots.push(snap);
+  return snap;
+}
+
+async function deleteCategoryById(id) {
+  const inUse = S.tasks.some((t) => t.categoryId === id);
+  if (inUse) {
+    S.tasks.filter((t) => t.categoryId === id).forEach((t) => { t.categoryId = "other"; });
+    for (const t of S.tasks.filter((t) => t.categoryId === "other")) await idbPut("tasks", t);
+  }
+  await idbDelete("categories", id);
+  S.categories = S.categories.filter((c) => c.id !== id);
+}
+
+async function saveSettings() {
+  await idbPut("settings", Object.assign({ key: "app" }, S.settings));
+}
+
+function newTaskSkeleton() {
+  const now = Date.now();
+  return {
+    id: uid(),
+    title: "",
+    description: "",
+    categoryId: "family",
+    priority: "normal",
+    status: "upcoming",
+    assignedTo: "both",
+    startDate: todayISO(),
+    startTime: null,
+    endDate: null,
+    endTime: null,
+    allDay: true,
+    locationName: "",
+    locationAddress: "",
+    mapsUrl: "",
+    amount: null,
+    flowType: null,
+    showOnCalendar: true,
+    notes: "",
+    subtasks: [],
+    attachments: [],
+    reminders: [],
+    recurrence: { frequency: "none" },
+    recurrenceId: null,
+    createdAt: now,
+    updatedAt: now,
+    completedAt: null,
+  };
+}
+
+/* ---------------- Query helpers ---------------- */
+function activeTasksForDate(iso) {
+  return S.tasks
+    .filter((t) => t.startDate === iso)
+    .sort((a, b) => {
+      if (a.allDay && !b.allDay) return -1;
+      if (!a.allDay && b.allDay) return 1;
+      return (a.startTime || "").localeCompare(b.startTime || "");
+    });
+}
+function countForDate(iso) {
+  return S.tasks.filter((t) => t.startDate === iso && t.status !== "completed").length;
+}
+function upcomingPreview() {
+  const out = [];
+  for (let i = 1; i <= 6 && out.length < 3; i++) {
+    const iso = addDaysISO(todayISO(), i);
+    const c = countForDate(iso);
+    if (c > 0) out.push({ iso, count: c });
+  }
+  return out;
+}
+function monthMatrix(anchorIso) {
+  const d = isoToDate(anchorIso);
+  const year = d.getFullYear(), month = d.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset = firstOfMonth.getDay(); // 0 = Sunday
+  const gridStart = new Date(year, month, 1 - startOffset);
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const cd = new Date(gridStart);
+    cd.setDate(gridStart.getDate() + i);
+    const iso = cd.getFullYear() + "-" + pad2(cd.getMonth() + 1) + "-" + pad2(cd.getDate());
+    cells.push({ iso, day: cd.getDate(), otherMonth: cd.getMonth() !== month });
+  }
+  return cells;
+}
+
+function taskMatchesFilter(t) {
+  const f = S.tasksFilter;
+  if (f.person && f.person !== "all") {
+    if (f.person === "both") { if (t.assignedTo !== "both") return false; }
+    else if (t.assignedTo !== f.person && t.assignedTo !== "both") return false;
+  }
+  if (f.priority && !f.priority.includes(t.priority)) return false;
+  if (f.category && !f.category.includes(t.categoryId)) return false;
+  if (f.status) {
+    if (f.status === "upcoming" && t.status !== "upcoming") return false;
+    if (f.status === "in_progress" && t.status !== "in_progress") return false;
+    if (f.status === "waiting" && t.status !== "waiting") return false;
+    if (f.status === "completed" && t.status !== "completed") return false;
+  } else {
+    if (t.status === "completed") return false;
+  }
+  if (f.date) {
+    const today = todayISO();
+    if (f.date === "today" && t.startDate !== today) return false;
+    if (f.date === "tomorrow" && t.startDate !== addDaysISO(today, 1)) return false;
+    if (f.date === "week" && (t.startDate < today || t.startDate > addDaysISO(today, 7))) return false;
+    if (f.date === "month" && (t.startDate < today || t.startDate > addMonthsISO(today, 1))) return false;
+  }
+  if (S.tasksSearch) {
+    const q = S.tasksSearch.toLowerCase();
+    const hay = [t.title, t.notes, t.locationName, catById(t.categoryId).name]
+      .join(" ").toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function filteredSortedTasks() {
+  let list = S.tasks.filter(taskMatchesFilter);
+  const prioRank = { urgent: 0, high: 1, normal: 2, low: 3 };
+  if (S.tasksSort === "datetime") {
+    list.sort((a, b) => (a.startDate + (a.startTime || "99:99")).localeCompare(b.startDate + (b.startTime || "99:99")));
+  } else if (S.tasksSort === "priority") {
+    list.sort((a, b) => prioRank[a.priority] - prioRank[b.priority]);
+  } else if (S.tasksSort === "category") {
+    list.sort((a, b) => catById(a.categoryId).name.localeCompare(catById(b.categoryId).name));
+  } else if (S.tasksSort === "created") {
+    list.sort((a, b) => b.createdAt - a.createdAt);
+  }
+  return list;
+}
+
+function groupTasks(list) {
+  const groups = [];
+  if (S.tasksGroup === "none") return [{ label: null, items: list }];
+  if (S.tasksGroup === "date") {
+    const map = new Map();
+    for (const t of list) {
+      const key = t.startDate || "No date";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(t);
+    }
+    for (const [key, items] of [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      groups.push({ label: dateGroupLabel(key), items });
+    }
+  } else if (S.tasksGroup === "priority") {
+    for (const p of PRIORITIES) {
+      const items = list.filter((t) => t.priority === p);
+      if (items.length) groups.push({ label: PRIORITY_LABEL[p], items });
+    }
+  } else if (S.tasksGroup === "category") {
+    for (const c of S.categories) {
+      const items = list.filter((t) => t.categoryId === c.id);
+      if (items.length) groups.push({ label: c.name, items });
+    }
+  }
+  return groups;
+}
+function dateGroupLabel(iso) {
+  if (iso === "No date") return "No date";
+  const today = todayISO();
+  if (iso === today) return "Today";
+  if (iso === addDaysISO(today, 1)) return "Tomorrow";
+  return weekdayLong(iso) + ", " + dayOfMonth(iso) + " " + monthLong(iso);
+}
+
+/* ---------------- Sheet / Fullscreen / Toast helpers ---------------- */
+const overlayEl = () => document.getElementById("overlay");
+const sheetEl = () => document.getElementById("sheet");
+const sheetContentEl = () => document.getElementById("sheetContent");
+const fullscreenEl = () => document.getElementById("fullscreen");
+const fullscreenContentEl = () => document.getElementById("fullscreenContent");
+
+let sheetClearTimer = null;
+function openSheet(html) {
+  clearTimeout(sheetClearTimer);
+  sheetContentEl().innerHTML = html;
+  overlayEl().classList.add("show");
+  sheetEl().classList.add("show");
+}
+function closeSheet() {
+  sheetEl().classList.remove("show");
+  overlayEl().classList.remove("show");
+  clearTimeout(sheetClearTimer);
+  sheetClearTimer = setTimeout(() => { sheetContentEl().innerHTML = ""; }, 250);
+}
+function openFullscreen(html) {
+  fullscreenContentEl().innerHTML = html;
+  fullscreenEl().classList.add("show");
+  fullscreenEl().scrollTop = 0;
+}
+function closeFullscreen() {
+  fullscreenEl().classList.remove("show");
+  setTimeout(() => { fullscreenContentEl().innerHTML = ""; }, 220);
+}
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("overlay").addEventListener("click", closeSheet);
+});
+
+let toastTimer = null;
+function showToast(message, actionLabel, actionFn) {
+  const el = document.getElementById("toast");
+  el.innerHTML = "<span>" + escapeHtml(message) + "</span>" +
+    (actionLabel ? '<button id="toastAction">' + escapeHtml(actionLabel) + "</button>" : "");
+  el.classList.add("show");
+  if (actionLabel && actionFn) {
+    document.getElementById("toastAction").onclick = () => { actionFn(); hideToast(); };
+  }
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 4200);
+}
+function hideToast() { document.getElementById("toast").classList.remove("show"); }
+
+/* ---------------- Router ---------------- */
+function navigate(hash) { window.location.hash = hash; }
+window.addEventListener("hashchange", render);
+
+function currentRoute() {
+  const h = window.location.hash || "#/today";
+  return h;
+}
+
+function render() {
+  if (!S.settings || !S.settings.onboarded) { renderOnboarding(); return; }
+  const hash = currentRoute();
+  closeSheet();
+  const view = document.getElementById("view");
+  const nav = document.getElementById("bottomNav");
+  const fab = document.getElementById("fab");
+
+  let showNav = true, showFab = true, navActive = "";
+
+  if (hash.startsWith("#/today")) { view.innerHTML = renderToday(); navActive = "today"; }
+  else if (hash.startsWith("#/tasks")) { view.innerHTML = renderTasks(); navActive = "tasks"; }
+  else if (hash.startsWith("#/calendar")) { view.innerHTML = renderCalendar(); navActive = "calendar"; }
+  else if (hash.startsWith("#/more")) { view.innerHTML = renderMore(); navActive = "more"; showFab = false; }
+  else if (hash.startsWith("#/categories")) { view.innerHTML = renderCategories(); showNav = false; showFab = false; }
+  else if (hash.startsWith("#/accounts")) { view.innerHTML = renderAccounts(); showNav = false; showFab = false; }
+  else if (hash.startsWith("#/finance")) { view.innerHTML = renderFinanceDashboard(); navActive = "finance"; }
+  else if (hash.startsWith("#/notifications")) { view.innerHTML = renderNotifications(); showNav = false; showFab = false; }
+  else if (hash.startsWith("#/task/new")) { openCreateSheet(); view.innerHTML = renderToday(); navActive = "today"; }
+  else if (hash.match(/^#\/task\/([^/]+)\/edit$/)) {
+    const id = hash.match(/^#\/task\/([^/]+)\/edit$/)[1];
+    view.innerHTML = renderTaskEditFullscreen(id); showNav = false; showFab = false;
+  }
+  else if (hash.match(/^#\/task\/([^/]+)$/)) {
+    const id = hash.match(/^#\/task\/([^/]+)$/)[1];
+    view.innerHTML = renderTaskDetail(id); showNav = false; showFab = false;
+  }
+  else { view.innerHTML = renderToday(); navActive = "today"; }
+
+  nav.style.display = showNav ? "flex" : "none";
+  fab.style.display = showFab ? "flex" : "none";
+  buildBottomNav(navActive);
+  wireGlobalActions();
+  afterRenderRoute(hash);
+  window.scrollTo(0, 0);
+}
+
+function afterRenderRoute(hash) {
+  if (hash.startsWith("#/today")) afterTodayRender();
+  else if (hash.startsWith("#/tasks")) afterTasksRender();
+  else if (hash.startsWith("#/calendar")) afterCalendarRender();
+  else if (hash.startsWith("#/more")) afterMoreRender();
+  else if (hash.startsWith("#/categories")) afterCategoriesRender();
+  else if (hash.startsWith("#/accounts")) afterAccountsRender();
+  else if (hash.startsWith("#/finance")) afterFinanceDashboardRender();
+  else if (hash.startsWith("#/notifications")) afterNotificationsRender();
+  else if (hash.match(/^#\/task\/([^/]+)\/edit$/)) afterTaskEditRender(hash.match(/^#\/task\/([^/]+)\/edit$/)[1]);
+  else if (hash.match(/^#\/task\/([^/]+)$/) && !hash.startsWith("#/task/new")) afterTaskDetailRender(hash.match(/^#\/task\/([^/]+)$/)[1]);
+  else afterTodayRender();
+}
+
+function buildBottomNav(active) {
+  const items = [
+    { key: "today", route: "#/today", icon: "ic-today", label: "Today" },
+    { key: "tasks", route: "#/tasks", icon: "ic-tasks", label: "Tasks" },
+    { key: "calendar", route: "#/calendar", icon: "ic-calendar", label: "Calendar" },
+    { key: "finance", route: "#/finance", icon: "ic-wallet", label: "Finance" },
+    { key: "more", route: "#/more", icon: "ic-more", label: "More" },
+  ];
+  document.getElementById("bottomNav").innerHTML = items.map((it) =>
+    '<button class="nav-item ' + (active === it.key ? "active" : "") + '" data-nav="' + it.route + '">' +
+    '<svg><use href="#' + it.icon + '"/></svg><span>' + it.label + "</span></button>"
+  ).join("");
+}
+
+function wireGlobalActions() {
+  document.querySelectorAll("[data-nav]").forEach((b) => {
+    b.onclick = () => navigate(b.getAttribute("data-nav"));
+  });
+  document.getElementById("fab").onclick = () => {
+    if (currentRoute().startsWith("#/finance")) openFinanceComposer();
+    else openCreateSheet();
+  };
+}
+
+/* ---------------- Shared row renderer ---------------- */
+function taskRowHtml(t) {
+  const cat = catById(t.categoryId);
+  const done = t.status === "completed";
+  const time = t.allDay ? "All day" : (t.startTime || "");
+  const endTime = (!t.allDay && t.endTime) ? '<span class="end">' + t.endTime + "</span>" : "";
+  const amountHtml = (t.amount != null) ?
+    '<span class="row-amount ' + (t.flowType === "income" ? "income" : "expense") + '">' +
+      (t.flowType === "income" ? fmtMoneySigned(t.amount) : "\u2212" + fmtMoney(t.amount)) +
+    "</span>" : "";
+  return (
+    '<div class="task-row" data-task-row="' + t.id + '">' +
+      '<div class="task-time">' + escapeHtml(time) + endTime + "</div>" +
+      '<button class="check ' + (done ? "done" : "") + '" data-toggle-complete="' + t.id + '" aria-label="Complete task">' +
+        '<svg><use href="#ic-check"/></svg></button>' +
+      '<div class="task-main" data-open-task="' + t.id + '">' +
+        '<div class="task-title ' + (done ? "done" : "") + '">' + escapeHtml(t.title) + "</div>" +
+        '<div class="task-meta">' +
+          '<span class="dot ' + cat.color + '"></span><span>' + escapeHtml(cat.name) + "</span>" +
+          '<span class="pflag ' + t.priority + '"></span>' +
+        "</div>" +
+      "</div>" +
+      amountHtml +
+      '<span class="assignee">' + escapeHtml(personShort(t.assignedTo)) + "</span>" +
+    "</div>"
+  );
+}
+
+function wireTaskRows(container) {
+  container.querySelectorAll("[data-open-task]").forEach((el) => {
+    el.onclick = () => navigate("#/task/" + el.getAttribute("data-open-task"));
+  });
+  container.querySelectorAll("[data-toggle-complete]").forEach((el) => {
+    el.onclick = (ev) => { ev.stopPropagation(); toggleComplete(el.getAttribute("data-toggle-complete")); };
+  });
+}
+
+async function toggleComplete(id) {
+  const t = S.tasks.find((x) => x.id === id);
+  if (!t) return;
+  const wasDone = t.status === "completed";
+  t.status = wasDone ? "upcoming" : "completed";
+  t.completedAt = wasDone ? null : Date.now();
+  await saveTask(t);
+  render();
+  if (!wasDone) {
+    showToast("Task completed", "Undo", () => { toggleComplete(id); });
+  }
+}
+
+/* ---------------- ONBOARDING ---------------- */
+function renderOnboarding() {
+  document.getElementById("bottomNav").style.display = "none";
+  document.getElementById("fab").style.display = "none";
+  document.getElementById("view").innerHTML =
+    '<div class="onb-wrap">' +
+      '<img class="onb-logo" src="icon-192.png" alt="" />' +
+      "<h1>Welcome to Together</h1>" +
+      '<p class="tag">Everything we need to do, together.</p>' +
+      '<div class="field"><label>Your name</label><input type="text" id="obName1" placeholder="Sérgio" value="Sérgio"></div>' +
+      '<div class="field"><label>Partner\u2019s name</label><input type="text" id="obName2" placeholder="Rita" value="Rita"></div>' +
+      '<div class="spacer"></div>' +
+      '<button class="btn" id="obContinue">Continue</button>' +
+    "</div>";
+  document.getElementById("obContinue").onclick = async () => {
+    const n1 = document.getElementById("obName1").value.trim() || "Sérgio";
+    const n2 = document.getElementById("obName2").value.trim() || "Rita";
+    S.settings.names = { sergio: n1, rita: n2 };
+    renderOnboardingStep2();
+  };
+}
+function renderOnboardingStep2() {
+  document.getElementById("view").innerHTML =
+    '<div class="onb-wrap">' +
+      '<img class="onb-logo" src="icon-192.png" alt="" />' +
+      "<h1>Together helps you</h1>" +
+      '<div class="card" style="margin-top:8px">' +
+        '<div class="list-row"><span class="lbl">See today at a glance</span></div>' +
+        '<div class="list-row"><span class="lbl">Organize every task</span></div>' +
+        '<div class="list-row"><span class="lbl">Share responsibilities</span></div>' +
+        '<div class="list-row"><span class="lbl">Keep the important details together</span></div>' +
+      "</div>" +
+      '<div class="spacer"></div>' +
+      '<button class="btn" id="obStart">Start</button>' +
+      '<div class="skip-link" id="obSkip">Skip</div>' +
+    "</div>";
+  const finish = async () => {
+    S.settings.onboarded = true;
+    await saveSettings();
+    navigate("#/today");
+    render();
+  };
+  document.getElementById("obStart").onclick = finish;
+  document.getElementById("obSkip").onclick = finish;
+}
+
+/* ---------------- TODAY ---------------- */
+function renderToday() {
+  const iso = S.todaySelected;
+  const isToday = iso === todayISO();
+  const tasks = activeTasksForDate(iso);
+  const activeCount = tasks.filter((t) => t.status !== "completed").length;
+  const heading = fmtDateHeading(iso);
+
+  let weekStrip = '<div class="week-strip">';
+  const weekStart = addDaysISO(todayISO(), -3);
+  for (let i = 0; i < 7; i++) {
+    const d = addDaysISO(weekStart, i);
+    const isSel = d === iso;
+    const isT = d === todayISO();
+    weekStrip += '<button class="week-day ' + (isSel ? "active" : "") + " " + (isT ? "today-dot" : "") +
+      '" data-pick-day="' + d + '"><div class="dow">' + weekdayShort(d) + '</div><div class="dom">' + dayOfMonth(d) + "</div></button>";
+  }
+  weekStrip += "</div>";
+
+  let body = "";
+  if (tasks.length === 0) {
+    body = '<div class="empty"><h3>Nothing planned' + (isToday ? " today" : "") + ".</h3><p>Enjoy the quiet.</p></div>";
+  } else {
+    body = '<div class="card">' + tasks.map(taskRowHtml).join("") + "</div>";
+  }
+
+  const upcoming = upcomingPreview();
+  let upcomingHtml = "";
+  if (upcoming.length) {
+    upcomingHtml = '<div class="section-label">COMING UP</div><div class="card">' +
+      upcoming.map((u) =>
+        '<div class="upcoming-row" data-open-day="' + u.iso + '"><span class="d">' + dateGroupLabel(u.iso) +
+        '</span><span class="c">' + u.count + (u.count === 1 ? " task" : " tasks") + "</span></div>"
+      ).join("") + "</div>";
+  }
+
+  return (
+    '<div class="topbar"><div><h1>' + greeting() + "</h1><div class=\"sub\">" + heading.weekday + " \u00b7 " + heading.dayMonth + "</div></div></div>" +
+    '<div style="padding:0 var(--sp-lg)">' + weekStrip +
+    '<div class="section-label">' + (isToday ? "TODAY" : heading.weekday.toUpperCase()) +
+      (activeCount ? " \u00b7 " + activeCount + (activeCount === 1 ? " thing" : " things") : "") + "</div>" +
+    body + upcomingHtml +
+    "</div>"
+  );
+}
+
+function afterTodayRender() {
+  const view = document.getElementById("view");
+  view.querySelectorAll("[data-pick-day]").forEach((el) => {
+    el.onclick = () => { S.todaySelected = el.getAttribute("data-pick-day"); render(); };
+  });
+  view.querySelectorAll("[data-open-day]").forEach((el) => {
+    el.onclick = () => { S.calSelected = el.getAttribute("data-open-day"); S.calMonthAnchor = S.calSelected; navigate("#/calendar"); };
+  });
+  wireTaskRows(view);
+}
+
+/* ---------------- TASKS ---------------- */
+function renderTasks() {
+  const list = filteredSortedTasks();
+  const groups = groupTasks(list);
+  const f = S.tasksFilter;
+  const personChips = [
+    { key: "all", label: "All" },
+    { key: "sergio", label: S.settings.names.sergio },
+    { key: "rita", label: S.settings.names.rita },
+    { key: "both", label: "Both" },
+  ];
+  let personRow = '<div class="chip-row">' + personChips.map((p) =>
+    '<button class="chip ' + (f.person === p.key ? "active" : "") + '" data-person-chip="' + p.key + '">' + escapeHtml(p.label) + "</button>"
+  ).join("") + "</div>";
+
+  const activeFilterCount = (f.priority ? 1 : 0) + (f.category ? 1 : 0) + (f.status ? 1 : 0) + (f.date ? 1 : 0);
+
+  let content = "";
+  if (!list.length) {
+    content = '<div class="empty"><h3>' + (S.tasksSearch ? "No tasks found." : "No tasks yet.") + "</h3>" +
+      (S.tasksSearch ? "<p>We couldn\u2019t find anything matching your search.</p>" : "<p>Tap + to add your first task.</p>") + "</div>";
+  } else {
+    content = groups.map((g) =>
+      (g.label ? '<div class="section-label">' + escapeHtml(g.label.toUpperCase()) + "</div>" : "") +
+      '<div class="card">' + g.items.map(taskRowHtml).join("") + "</div>"
+    ).join("");
+  }
+
+  return (
+    '<div class="topbar"><h1>Tasks</h1>' +
+      '<button class="icon-btn" id="openFilterSheet"><svg><use href="#ic-filter"/></svg></button></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+    '<div class="field" style="margin-bottom:12px">' +
+      '<input type="search" id="taskSearchInput" placeholder="Search" value="' + escapeHtml(S.tasksSearch) + '">' +
+    "</div>" +
+    personRow +
+    (activeFilterCount ? '<div style="margin-top:10px"><button class="link-btn" id="clearFilters">Clear ' + activeFilterCount + " filter" + (activeFilterCount > 1 ? "s" : "") + "</button></div>" : "") +
+    '<div class="section-label" style="display:flex;justify-content:space-between;align-items:center">' +
+      "<span>" + list.length + (list.length === 1 ? " task" : " tasks") + '</span>' +
+      '<button class="link-btn" id="openGroupSheet">Group &amp; sort</button>' +
+    "</div>" +
+    content +
+    "</div>"
+  );
+}
+
+function afterTasksRender() {
+  const view = document.getElementById("view");
+  wireTaskRows(view);
+  const input = document.getElementById("taskSearchInput");
+  input.oninput = () => { S.tasksSearch = input.value; render(); setTimeout(() => {
+    const el = document.getElementById("taskSearchInput"); if (el) { el.focus(); el.selectionStart = el.selectionEnd = el.value.length; }
+  }, 0); };
+  view.querySelectorAll("[data-person-chip]").forEach((el) => {
+    el.onclick = () => { S.tasksFilter.person = el.getAttribute("data-person-chip"); render(); };
+  });
+  const clearBtn = document.getElementById("clearFilters");
+  if (clearBtn) clearBtn.onclick = () => {
+    S.tasksFilter = { person: S.tasksFilter.person, priority: null, category: null, status: null, date: null };
+    render();
+  };
+  document.getElementById("openFilterSheet").onclick = openFilterSheet;
+  document.getElementById("openGroupSheet").onclick = openGroupSortSheet;
+}
+
+function openFilterSheet() {
+  const f = S.tasksFilter;
+  const priorityOpts = PRIORITIES.map((p) =>
+    '<button class="chip ' + (f.priority && f.priority.includes(p) ? "active" : "") + '" data-f-priority="' + p + '">' + PRIORITY_LABEL[p] + "</button>"
+  ).join("");
+  const catOpts = S.categories.map((c) =>
+    '<button class="chip ' + (f.category && f.category.includes(c.id) ? "active" : "") + '" data-f-category="' + c.id + '"><span class="dot ' + c.color + '"></span>' + escapeHtml(c.name) + "</button>"
+  ).join("");
+  const statusOpts = [["upcoming","Upcoming"],["in_progress","In Progress"],["waiting","Waiting"],["completed","Completed"]].map(([k,l]) =>
+    '<button class="chip ' + (f.status === k ? "active" : "") + '" data-f-status="' + k + '">' + l + "</button>"
+  ).join("");
+  const dateOpts = [["today","Today"],["tomorrow","Tomorrow"],["week","This Week"],["month","This Month"]].map(([k,l]) =>
+    '<button class="chip ' + (f.date === k ? "active" : "") + '" data-f-date="' + k + '">' + l + "</button>"
+  ).join("");
+
+  openSheet(
+    '<div class="sheet-head"><span class="title">Filters</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<div class="field"><label>PRIORITY</label><div class="chip-row">' + priorityOpts + "</div></div>" +
+      '<div class="field"><label>CATEGORY</label><div class="chip-row">' + catOpts + "</div></div>" +
+      '<div class="field"><label>STATUS</label><div class="chip-row">' + statusOpts + "</div></div>" +
+      '<div class="field"><label>DATE</label><div class="chip-row">' + dateOpts + "</div></div>" +
+      '<button class="btn" id="applyFilters">Show results</button>' +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = closeSheet;
+  document.querySelectorAll("[data-f-priority]").forEach((el) => el.onclick = () => {
+    const v = el.getAttribute("data-f-priority");
+    f.priority = f.priority && f.priority.includes(v) ? null : [v];
+    openFilterSheet();
+  });
+  document.querySelectorAll("[data-f-category]").forEach((el) => el.onclick = () => {
+    const v = el.getAttribute("data-f-category");
+    f.category = f.category && f.category.includes(v) ? null : [v];
+    openFilterSheet();
+  });
+  document.querySelectorAll("[data-f-status]").forEach((el) => el.onclick = () => {
+    const v = el.getAttribute("data-f-status");
+    f.status = f.status === v ? null : v;
+    openFilterSheet();
+  });
+  document.querySelectorAll("[data-f-date]").forEach((el) => el.onclick = () => {
+    const v = el.getAttribute("data-f-date");
+    f.date = f.date === v ? null : v;
+    openFilterSheet();
+  });
+  document.getElementById("applyFilters").onclick = () => { closeSheet(); render(); };
+}
+
+function openGroupSortSheet() {
+  const groupOpts = [["date","Date"],["priority","Priority"],["category","Category"],["none","None"]];
+  const sortOpts = [["datetime","Date + Time"],["priority","Priority"],["category","Category"],["created","Created date"]];
+  openSheet(
+    '<div class="sheet-head"><span class="title">Group &amp; sort</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<div class="field"><label>GROUP BY</label><div class="chip-row">' +
+      groupOpts.map(([k,l]) => '<button class="chip ' + (S.tasksGroup===k?"active":"") + '" data-group="' + k + '">' + l + "</button>").join("") +
+      "</div></div>" +
+      '<div class="field"><label>SORT BY</label><div class="chip-row">' +
+      sortOpts.map(([k,l]) => '<button class="chip ' + (S.tasksSort===k?"active":"") + '" data-sort="' + k + '">' + l + "</button>").join("") +
+      "</div></div>" +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = () => { closeSheet(); render(); };
+  document.querySelectorAll("[data-group]").forEach((el) => el.onclick = () => { S.tasksGroup = el.getAttribute("data-group"); openGroupSortSheet(); });
+  document.querySelectorAll("[data-sort]").forEach((el) => el.onclick = () => { S.tasksSort = el.getAttribute("data-sort"); openGroupSortSheet(); });
+}
+
+/* ---------------- CALENDAR ---------------- */
+const CAL_MAX_VISIBLE = 3;
+
+function renderCalendar() {
+  const anchor = S.calMonthAnchor;
+  const cells = monthMatrix(anchor);
+  const monthLabel = monthLong(anchor) + " " + isoToDate(anchor).getFullYear();
+  const today = todayISO();
+
+  let head = '<div class="cal-grid-head">' + WEEKDAYS_SHORT.map((d) => "<span>" + d + "</span>").join("") + "</div>";
+  let grid = '<div class="cal-grid">';
+  for (const cell of cells) {
+    const dayTasks = S.tasks
+      .filter((t) => t.startDate === cell.iso && t.showOnCalendar !== false)
+      .sort((a, b) => (a.allDay ? "" : a.startTime || "").localeCompare(b.allDay ? "" : b.startTime || ""));
+    const visible = dayTasks.slice(0, CAL_MAX_VISIBLE);
+    const extra = dayTasks.length - visible.length;
+    const eventsHtml = visible.map((t) => {
+      const done = t.status === "completed";
+      const cat = catById(t.categoryId);
+      const timeLabel = t.allDay ? "" : '<span class="t">' + escapeHtml(t.startTime || "") + "</span>";
+      return '<span class="day-event ' + (done ? "done" : "") + '" style="border-left:3px solid var(--' + cat.color + ')" ' +
+        'data-drag-task="' + t.id + '" data-drag-date="' + cell.iso + '">' + timeLabel + (timeLabel ? " " : "") + escapeHtml(t.title) + "</span>";
+    }).join("");
+    const moreHtml = extra > 0 ? '<span class="cal-more" data-cal-day="' + cell.iso + '">+' + extra + " more</span>" : "";
+
+    grid += '<div class="cal-cell ' + (cell.otherMonth ? "other-month" : "") + " " +
+      (cell.iso === S.calSelected ? "selected" : "") + " " + (cell.iso === today ? "is-today" : "") +
+      '" data-cal-day="' + cell.iso + '">' +
+      '<span class="daynum">' + cell.day + "</span>" +
+      '<div class="day-events">' + eventsHtml + moreHtml + "</div>" +
+      "</div>";
+  }
+  grid += "</div>";
+
+  const daySchedule = renderDaySchedule(S.calSelected);
+
+  return (
+    '<div class="topbar"><h1>Calendar</h1></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+    '<div class="cal-nav">' +
+      '<button class="icon-btn" id="calPrev"><svg style="transform:rotate(180deg)"><use href="#ic-chevron"/></svg></button>' +
+      '<span class="month">' + monthLabel + "</span>" +
+      '<button class="icon-btn" id="calNext"><svg><use href="#ic-chevron"/></svg></button>' +
+    "</div>" +
+    head + grid +
+    daySchedule +
+    "</div>"
+  );
+}
+
+function renderDaySchedule(iso) {
+  const tasks = activeTasksForDate(iso).filter((t) => t.showOnCalendar !== false);
+  const heading = fmtDateHeading(iso);
+  let body;
+  if (!tasks.length) {
+    body = '<div class="empty" style="padding:32px 0 8px"><h3>Nothing planned.</h3></div>';
+  } else {
+    body = '<div class="card">' + tasks.map(taskRowHtml).join("") + "</div>";
+  }
+  return (
+    '<div class="day-schedule">' +
+      "<h3>" + heading.weekday + " \u00b7 " + heading.dayMonth + "</h3>" +
+      body +
+      '<button class="btn secondary" style="margin-top:12px" id="addTaskForDay">+ Add task for this day</button>' +
+    "</div>"
+  );
+}
+
+function afterCalendarRender() {
+  const view = document.getElementById("view");
+  wireTaskRows(view);
+  view.querySelectorAll("[data-cal-day]").forEach((el) => {
+    el.addEventListener("click", () => { S.calSelected = el.getAttribute("data-cal-day"); render(); });
+  });
+  view.querySelectorAll("[data-drag-task]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      if (calDragJustHappened) { calDragJustHappened = false; return; }
+      ev.stopPropagation();
+      navigate("#/task/" + el.getAttribute("data-drag-task"));
+    });
+    el.addEventListener("pointerdown", onDayEventPointerDown);
+  });
+  document.getElementById("calPrev").onclick = () => { S.calMonthAnchor = addMonthsISO(S.calMonthAnchor, -1); render(); };
+  document.getElementById("calNext").onclick = () => { S.calMonthAnchor = addMonthsISO(S.calMonthAnchor, 1); render(); };
+  const addBtn = document.getElementById("addTaskForDay");
+  if (addBtn) addBtn.onclick = () => openCreateSheet({ startDate: S.calSelected });
+}
+
+/* ---------------- CALENDAR DRAG-AND-DROP ---------------- */
+// Long-press-then-drag pattern so it doesn't fight normal taps or page scroll,
+// and works the same for touch, mouse, and pen (pointer events).
+let calDrag = null;            // { taskId, originDate, startX, startY, longPressTimer, started, ghostEl, lastTargetCell }
+let calDragJustHappened = false;
+const CAL_DRAG_MOVE_CANCEL_PX = 8;   // touch: movement before long-press fires that cancels the drag attempt
+const CAL_DRAG_LONGPRESS_MS = 260;   // touch: hold time before a drag begins
+const CAL_DRAG_MOUSE_MOVE_PX = 4;    // mouse/pen: movement that starts a drag immediately, no wait
+
+function onDayEventPointerDown(ev) {
+  if (ev.button !== undefined && ev.button !== 0) return; // left-click / primary touch only
+  const el = ev.currentTarget;
+  const taskId = el.getAttribute("data-drag-task");
+  const originDate = el.getAttribute("data-drag-date");
+  const startX = ev.clientX, startY = ev.clientY;
+  // Mouse (and pen) never competes with a page-scroll gesture the way touch does,
+  // so it can start dragging on deliberate movement right away — no long-press needed.
+  const isMouse = ev.pointerType === "mouse" || ev.pointerType === "pen";
+
+  calDrag = {
+    taskId, originDate, startX, startY,
+    started: false,
+    el,
+    longPressTimer: isMouse ? null : setTimeout(() => beginCalDrag(), CAL_DRAG_LONGPRESS_MS),
+  };
+
+  const move = (e) => {
+    if (!calDrag) return;
+    const dx = e.clientX - calDrag.startX, dy = e.clientY - calDrag.startY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (!calDrag.started) {
+      if (isMouse) {
+        if (dist > CAL_DRAG_MOUSE_MOVE_PX) beginCalDrag();
+        else return;
+      } else if (dist > CAL_DRAG_MOVE_CANCEL_PX) {
+        clearTimeout(calDrag.longPressTimer);
+        cleanupCalDrag();
+        return;
+      } else {
+        return;
+      }
+    }
+    e.preventDefault();
+    positionGhost(e.clientX, e.clientY);
+    highlightDropTarget(e.clientX, e.clientY);
+  };
+  const up = (e) => {
+    if (calDrag && calDrag.started) {
+      finishCalDrag(e.clientX, e.clientY);
+      calDragJustHappened = true;
+      setTimeout(() => { calDragJustHappened = false; }, 300);
+    } else if (calDrag) {
+      clearTimeout(calDrag.longPressTimer);
+    }
+    calDrag = null;
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    window.removeEventListener("pointercancel", up);
+  };
+  window.addEventListener("pointermove", move, { passive: false });
+  window.addEventListener("pointerup", up);
+  window.addEventListener("pointercancel", up);
+}
+
+function beginCalDrag() {
+  if (!calDrag) return;
+  calDrag.started = true;
+  calDrag.el.classList.add("dragging");
+  const ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  ghost.textContent = calDrag.el.textContent;
+  document.body.appendChild(ghost);
+  calDrag.ghostEl = ghost;
+  positionGhost(calDrag.startX, calDrag.startY);
+  if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
+}
+
+function positionGhost(x, y) {
+  if (!calDrag || !calDrag.ghostEl) return;
+  calDrag.ghostEl.style.left = x + "px";
+  calDrag.ghostEl.style.top = y + "px";
+}
+
+function highlightDropTarget(x, y) {
+  if (!calDrag) return;
+  const el = document.elementFromPoint(x, y);
+  const cell = el ? el.closest(".cal-cell") : null;
+  if (calDrag.lastTargetCell && calDrag.lastTargetCell !== cell) {
+    calDrag.lastTargetCell.classList.remove("drop-target");
+  }
+  if (cell) cell.classList.add("drop-target");
+  calDrag.lastTargetCell = cell;
+}
+
+function cleanupCalDrag() {
+  if (!calDrag) return;
+  if (calDrag.el) calDrag.el.classList.remove("dragging");
+  if (calDrag.ghostEl) calDrag.ghostEl.remove();
+  if (calDrag.lastTargetCell) calDrag.lastTargetCell.classList.remove("drop-target");
+}
+
+async function finishCalDrag(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const cell = el ? el.closest(".cal-cell") : null;
+  cleanupCalDrag();
+  if (!cell) return;
+  const newDate = cell.getAttribute("data-cal-day");
+  if (!newDate || newDate === calDrag.originDate) return;
+
+  const t = S.tasks.find((x2) => x2.id === calDrag.taskId);
+  if (!t) return;
+  const dayDelta = daysBetweenISO(calDrag.originDate, newDate);
+  const prevStart = t.startDate, prevEnd = t.endDate;
+  t.startDate = newDate;
+  if (t.endDate) t.endDate = addDaysISO(t.endDate, dayDelta);
+  await saveTask(t);
+  S.calSelected = newDate;
+  render();
+  showToast("Moved to " + fmtDateHeading(newDate).weekday + " " + fmtDateHeading(newDate).dayMonth, "Undo", async () => {
+    t.startDate = prevStart; t.endDate = prevEnd;
+    await saveTask(t);
+    S.calSelected = prevStart;
+    render();
+  });
+}
+
+function daysBetweenISO(a, b) {
+  const msPerDay = 86400000;
+  return Math.round((isoToDate(b) - isoToDate(a)) / msPerDay);
+}
+
+/* ---------------- CREATE TASK (quick sheet) ---------------- */
+function openCreateSheet(prefill) {
+  prefill = prefill || {};
+  const draft = newTaskSkeleton();
+  if (prefill.startDate) { draft.startDate = prefill.startDate; }
+  if (prefill.startTime) { draft.startTime = prefill.startTime; draft.allDay = false; }
+
+  const render_ = () => {
+    const catChips = S.categories.map((c) =>
+      '<button class="chip ' + (draft.categoryId === c.id ? "cat-active" : "") + '" style="' +
+      (draft.categoryId === c.id ? "background:var(--" + c.color + ")" : "") + '" data-pick-cat="' + c.id + '">' +
+      (draft.categoryId === c.id ? "" : '<span class="dot ' + c.color + '"></span>') + escapeHtml(c.name) + "</button>"
+    ).join("");
+    const personChips = ["sergio", "rita", "both"].map((p) =>
+      '<button class="chip ' + (draft.assignedTo === p ? "active" : "") + '" data-pick-person="' + p + '">' + personLabel(p) + "</button>"
+    ).join("");
+    const priorityChips = PRIORITIES.map((p) =>
+      '<button class="chip ' + (draft.priority === p ? "active" : "") + '" data-pick-priority="' + p + '"><span class="pflag ' + p + '"></span>' + PRIORITY_LABEL[p] + "</button>"
+    ).join("");
+
+    openSheet(
+      '<div class="sheet-head"><span class="title">New task</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+      '<div class="sheet-body">' +
+        '<input class="title-input" id="quickTitle" placeholder="What needs to be done?" value="' + escapeHtml(draft.title) + '">' +
+        '<div class="field"><label>WHEN</label>' +
+          '<div style="display:flex;gap:8px">' +
+            '<input type="date" id="quickDate" value="' + draft.startDate + '" style="flex:1">' +
+            '<input type="time" id="quickTime" value="' + (draft.startTime || "") + '" style="flex:1">' +
+          "</div></div>" +
+        '<div class="field"><label>ASSIGNED TO</label><div class="chip-row">' + personChips + "</div></div>" +
+        '<div class="field"><label>CATEGORY</label><div class="chip-row">' + catChips + "</div></div>" +
+        '<div class="field"><label>PRIORITY</label><div class="chip-row">' + priorityChips + "</div></div>" +
+        '<button class="btn" id="quickAdd">Add Task</button>' +
+      "</div>"
+    );
+
+    document.getElementById("closeSheetBtn").onclick = closeSheet;
+    document.getElementById("quickTitle").oninput = (e) => { draft.title = e.target.value; };
+    document.getElementById("quickDate").onchange = (e) => { draft.startDate = e.target.value; };
+    document.getElementById("quickTime").onchange = (e) => { draft.startTime = e.target.value || null; draft.allDay = !e.target.value; };
+    document.querySelectorAll("[data-pick-cat]").forEach((el) => el.onclick = () => { draft.categoryId = el.getAttribute("data-pick-cat"); render_(); });
+    document.querySelectorAll("[data-pick-person]").forEach((el) => el.onclick = () => { draft.assignedTo = el.getAttribute("data-pick-person"); render_(); });
+    document.querySelectorAll("[data-pick-priority]").forEach((el) => el.onclick = () => { draft.priority = el.getAttribute("data-pick-priority"); render_(); });
+    document.getElementById("quickAdd").onclick = async () => {
+      const titleVal = document.getElementById("quickTitle").value.trim();
+      if (!titleVal) { showToast("Give the task a title first."); return; }
+      draft.title = titleVal;
+      draft.startDate = document.getElementById("quickDate").value || todayISO();
+      await createTaskWithRecurrence(draft);
+      closeSheet();
+      render();
+      showToast("Task added", "Open", () => navigate("#/task/" + draft.id));
+    };
+    setTimeout(() => { const el = document.getElementById("quickTitle"); if (el) el.focus(); }, 150);
+  };
+  render_();
+}
+
+async function createTaskWithRecurrence(draft) {
+  await saveTask(draft);
+  if (draft.recurrence && draft.recurrence.frequency && draft.recurrence.frequency !== "none") {
+    await generateRecurrenceInstances(draft);
+  }
+}
+
+async function generateRecurrenceInstances(base) {
+  const groupId = uid();
+  base.recurrenceId = groupId;
+  await saveTask(base);
+  const stepFn = base.recurrence.frequency === "daily" ? (d) => addDaysISO(d, 1)
+    : base.recurrence.frequency === "weekly" ? (d) => addDaysISO(d, 7)
+    : base.recurrence.frequency === "monthly" ? (d) => addMonthsISO(d, 1)
+    : (d) => addMonthsISO(d, 12);
+  let cursor = base.startDate;
+  let created = 0;
+  for (let i = 0; i < 8; i++) {
+    cursor = stepFn(cursor);
+    const clone = JSON.parse(JSON.stringify(base));
+    clone.id = uid();
+    clone.startDate = cursor;
+    clone.status = "upcoming";
+    clone.completedAt = null;
+    clone.attachments = [];
+    clone.recurrenceId = groupId;
+    clone.createdAt = Date.now();
+    clone.updatedAt = Date.now();
+    await saveTask(clone);
+    created++;
+  }
+  return created;
+}
+
+/* ---------------- TASK DETAIL ---------------- */
+function renderTaskDetail(id) {
+  const t = S.tasks.find((x) => x.id === id);
+  if (!t) return '<div class="back-row"><button class="icon-btn" data-nav="#/today"><svg><use href="#ic-back"/></svg></button></div><div class="empty"><h3>Task not found.</h3><p>It may have been deleted.</p></div>';
+  const cat = catById(t.categoryId);
+  const done = t.status === "completed";
+
+  let when = "";
+  if (t.startDate) {
+    const h = fmtDateHeading(t.startDate);
+    when = h.weekday + ", " + h.dayMonth;
+    if (!t.allDay && t.startTime) {
+      when += " \u00b7 " + t.startTime + (t.endTime ? " \u2013 " + t.endTime : "");
+    } else {
+      when += " \u00b7 All day";
+    }
+  }
+
+  let sections = "";
+
+  if (t.amount != null) {
+    sections += '<div class="detail-section"><h4>AMOUNT</h4><div class="row-amount ' + (t.flowType === "income" ? "income" : "expense") + '" style="font-size:22px">' +
+      (t.flowType === "income" ? fmtMoneySigned(t.amount) : "\u2212" + fmtMoney(t.amount)) +
+      "</div></div>";
+  }
+
+  sections += '<div class="detail-section"><h4>ASSIGNED TO</h4><div class="detail-people">' +
+    (t.assignedTo === "both"
+      ? '<span class="person-pill">' + escapeHtml(S.settings.names.sergio) + '</span><span class="person-pill">' + escapeHtml(S.settings.names.rita) + "</span>"
+      : '<span class="person-pill">' + escapeHtml(personLabel(t.assignedTo)) + "</span>") +
+    "</div></div>";
+
+  if (t.locationName || t.mapsUrl || t.locationAddress) {
+    sections += '<div class="detail-section"><h4>LOCATION</h4><div class="loc-row"><div>' +
+      (t.locationName ? '<div class="loc-name">\uD83D\uDCCD ' + escapeHtml(t.locationName) + "</div>" : "") +
+      (t.locationAddress ? '<div class="loc-addr">' + escapeHtml(t.locationAddress) + "</div>" : "") + "</div>" +
+      (t.mapsUrl ? '<a class="maps-link" href="' + escapeHtml(t.mapsUrl) + '" target="_blank" rel="noopener">Open in Maps</a>' : "") +
+      "</div></div>";
+  } else {
+    sections += '<div class="detail-section"><h4>LOCATION</h4><button class="link-btn" data-add-field="location">+ Add location</button></div>';
+  }
+
+  if (t.notes) {
+    sections += '<div class="detail-section"><h4>NOTES</h4><div class="notes-text">' + escapeHtml(t.notes) + "</div></div>";
+  } else {
+    sections += '<div class="detail-section"><h4>NOTES</h4><button class="link-btn" data-add-field="notes">+ Add notes</button></div>';
+  }
+
+  const subDone = t.subtasks.filter((s) => s.completed).length;
+  sections += '<div class="detail-section"><h4>CHECKLIST</h4>';
+  if (t.subtasks.length) {
+    sections += t.subtasks.map((s) =>
+      '<div class="checklist-row"><button class="check ' + (s.completed ? "done" : "") + '" data-toggle-sub="' + s.id + '"><svg><use href="#ic-check"/></svg></button>' +
+      '<span class="checklist-title ' + (s.completed ? "done" : "") + '">' + escapeHtml(s.title) + "</span></div>"
+    ).join("") +
+    '<div class="progress-track"><div class="progress-fill" style="width:' + Math.round((subDone / t.subtasks.length) * 100) + '%"></div></div>' +
+    '<div style="color:var(--text2);font-size:13px;margin-top:6px">' + subDone + " / " + t.subtasks.length + " complete</div>" +
+    '<div style="margin-top:10px"><input type="text" id="newSubInput" placeholder="Add item" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px"></div>';
+  } else {
+    sections += '<div style="margin-top:2px"><input type="text" id="newSubInput" placeholder="Add checklist item" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px"></div>';
+  }
+  sections += "</div>";
+
+  sections += '<div class="detail-section"><h4>ATTACHMENTS</h4>';
+  if (t.attachments.length) {
+    sections += t.attachments.map((a) =>
+      '<div class="attach-row"><div class="attach-icon"><svg><use href="#' + (a.fileType && a.fileType.startsWith("image") ? "ic-img" : "ic-doc") + '"/></svg></div>' +
+      '<div style="flex:1"><div class="attach-name">' + escapeHtml(a.fileName) + '</div><div class="attach-size">' + fileSizeLabel(a.fileSize) + "</div></div>" +
+      '<button class="icon-btn" data-open-attach="' + a.id + '" style="width:34px;height:34px"><svg style="width:16px;height:16px"><use href="#ic-doc"/></svg></button>' +
+      '<button class="icon-btn" data-delete-attach="' + a.id + '" style="width:34px;height:34px"><svg style="width:16px;height:16px"><use href="#ic-trash"/></svg></button>' +
+      "</div>"
+    ).join("");
+  }
+  sections += '<div style="margin-top:8px"><label class="btn secondary" style="display:block;text-align:center" for="attachInput">+ Add attachment</label>' +
+    '<input type="file" id="attachInput" style="display:none" multiple></div></div>';
+
+  const reminderText = t.reminders.length ? t.reminders.map((r) => REMINDER_OPTIONS.find((o) => o.minutes === r.minutesBefore)?.label || "").join(", ") : null;
+  sections += '<div class="detail-section"><h4>REMINDER</h4>' +
+    (reminderText ? "<div>" + escapeHtml(reminderText) + "</div>" : "") +
+    '<button class="link-btn" id="openReminderPicker">' + (reminderText ? "Change reminder" : "+ Add reminder") + "</button></div>";
+
+  if (t.recurrence && t.recurrence.frequency !== "none") {
+    sections += '<div class="detail-section"><h4>RECURRENCE</h4><div>' + (t.recurrence.frequency[0].toUpperCase() + t.recurrence.frequency.slice(1)) + "</div></div>";
+  }
+
+  return (
+    '<div class="back-row"><button class="icon-btn" data-nav="#/today"><svg><use href="#ic-back"/></svg></button></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+    '<div class="detail-hero">' +
+      '<div class="detail-cat"><span class="dot ' + cat.color + '"></span>' + escapeHtml(cat.name) + '<span class="pflag ' + t.priority + '" style="margin-left:6px"></span>' + PRIORITY_LABEL[t.priority] + "</div>" +
+      '<div class="detail-title ' + (done ? "done" : "") + '" style="' + (done ? "text-decoration:line-through;color:var(--text2)" : "") + '">' + escapeHtml(t.title) + "</div>" +
+      (when ? '<div class="detail-when">' + when + "</div>" : "") +
+    "</div>" +
+    sections +
+    '<div class="detail-actions">' +
+      '<button class="btn secondary" data-nav="#/task/' + t.id + '/edit"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#ic-edit"/></svg>Edit</button>' +
+      '<button class="btn secondary" id="duplicateBtn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:6px"><use href="#ic-copy"/></svg>Duplicate</button>' +
+      '<button class="btn ' + (done ? "secondary" : "") + '" id="completeBtn">' + (done ? "Reopen" : "Complete") + "</button>" +
+      '<button class="btn danger" id="deleteBtn">Delete</button>' +
+    "</div>" +
+    "</div>"
+  );
+}
+
+function afterTaskDetailRender(id) {
+  const view = document.getElementById("view");
+  document.querySelectorAll("[data-nav]").forEach((b) => { b.onclick = () => navigate(b.getAttribute("data-nav")); });
+
+  const t = S.tasks.find((x) => x.id === id);
+  if (!t) return;
+
+  document.querySelectorAll("[data-toggle-sub]").forEach((el) => el.onclick = async () => {
+    const sid = el.getAttribute("data-toggle-sub");
+    const s = t.subtasks.find((x) => x.id === sid);
+    s.completed = !s.completed;
+    await saveTask(t);
+    render();
+  });
+  const newSubInput = document.getElementById("newSubInput");
+  if (newSubInput) newSubInput.onkeydown = async (e) => {
+    if (e.key === "Enter" && newSubInput.value.trim()) {
+      t.subtasks.push({ id: uid(), title: newSubInput.value.trim(), completed: false, sortOrder: t.subtasks.length });
+      await saveTask(t);
+      render();
+    }
+  };
+
+  const attachInput = document.getElementById("attachInput");
+  if (attachInput) attachInput.onchange = async () => {
+    for (const file of attachInput.files) {
+      t.attachments.push({ id: uid(), fileName: file.name, fileType: file.type, fileSize: file.size, blob: file });
+    }
+    try {
+      await saveTask(t);
+      render();
+    } catch (err) {
+      showToast("We couldn\u2019t add this file.");
+    }
+  };
+  document.querySelectorAll("[data-delete-attach]").forEach((el) => el.onclick = async () => {
+    t.attachments = t.attachments.filter((a) => a.id !== el.getAttribute("data-delete-attach"));
+    await saveTask(t);
+    render();
+  });
+  document.querySelectorAll("[data-open-attach]").forEach((el) => el.onclick = () => {
+    const a = t.attachments.find((x) => x.id === el.getAttribute("data-open-attach"));
+    if (a && a.blob) { const url = URL.createObjectURL(a.blob); window.open(url, "_blank"); }
+  });
+
+  document.querySelectorAll("[data-add-field]").forEach((el) => el.onclick = () => navigate("#/task/" + id + "/edit"));
+
+  const remBtn = document.getElementById("openReminderPicker");
+  if (remBtn) remBtn.onclick = () => openReminderSheet(t);
+
+  document.getElementById("completeBtn").onclick = () => toggleComplete(id);
+  document.getElementById("duplicateBtn").onclick = async () => {
+    const clone = JSON.parse(JSON.stringify(t));
+    clone.id = uid();
+    clone.title = t.title;
+    clone.status = "upcoming";
+    clone.completedAt = null;
+    clone.attachments = [];
+    clone.createdAt = Date.now();
+    clone.updatedAt = Date.now();
+    await saveTask(clone);
+    render();
+    showToast("Task duplicated", "Open", () => navigate("#/task/" + clone.id));
+  };
+  document.getElementById("deleteBtn").onclick = () => {
+    const isRecurring = !!t.recurrenceId;
+    openSheet(
+      '<div class="sheet-body" style="padding-top:20px">' +
+      '<h3 style="margin:0 0 8px">Delete this task?</h3>' +
+      '<p style="color:var(--text2);font-size:15px;margin:0 0 20px">This can\u2019t be undone.</p>' +
+      (isRecurring
+        ? '<div class="btn-row" style="flex-direction:column;gap:8px">' +
+            '<button class="btn danger" id="confirmDelOne">Delete just this one</button>' +
+            '<button class="btn danger" id="confirmDelForward">Delete this and future occurrences</button>' +
+            '<button class="btn ghost" id="cancelDel">Cancel</button>' +
+          "</div>"
+        : '<div class="btn-row"><button class="btn ghost" id="cancelDel">Cancel</button><button class="btn danger" id="confirmDel">Delete</button></div>') +
+      "</div>"
+    );
+    document.getElementById("cancelDel").onclick = closeSheet;
+    if (isRecurring) {
+      document.getElementById("confirmDelOne").onclick = async () => {
+        await deleteTaskById(id);
+        closeSheet();
+        navigate("#/today");
+        showToast("Task deleted");
+      };
+      document.getElementById("confirmDelForward").onclick = async () => {
+        const count = await deleteRecurrenceOnward(t.recurrenceId, t.startDate);
+        closeSheet();
+        navigate("#/today");
+        showToast(count + " occurrence" + (count === 1 ? "" : "s") + " deleted");
+      };
+    } else {
+      document.getElementById("confirmDel").onclick = async () => {
+        await deleteTaskById(id);
+        closeSheet();
+        navigate("#/today");
+        showToast("Task deleted");
+      };
+    }
+  };
+}
+
+function openReminderSheet(t) {
+  openSheet(
+    '<div class="sheet-head"><span class="title">Reminder</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+    REMINDER_OPTIONS.map((o) =>
+      '<div class="list-row"><span class="lbl">' + o.label + '</span><button class="toggle ' +
+      (t.reminders.some((r) => r.minutesBefore === o.minutes) ? "on" : "") + '" data-rem="' + o.minutes + '"><span class="knob"></span></button></div>'
+    ).join("") +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = () => { closeSheet(); render(); };
+  document.querySelectorAll("[data-rem]").forEach((el) => el.onclick = async () => {
+    const m = Number(el.getAttribute("data-rem"));
+    const has = t.reminders.some((r) => r.minutesBefore === m);
+    t.reminders = has ? t.reminders.filter((r) => r.minutesBefore !== m) : [...t.reminders, { minutesBefore: m }];
+    await saveTask(t);
+    openReminderSheet(t);
+  });
+}
+
+/* ---------------- EDIT TASK (fullscreen, full fields) ---------------- */
+function renderTaskEditFullscreen(id) {
+  const t = S.tasks.find((x) => x.id === id);
+  if (!t) return "";
+  const catChips = S.categories.map((c) =>
+    '<button class="chip ' + (t.categoryId === c.id ? "cat-active" : "") + '" style="' +
+    (t.categoryId === c.id ? "background:var(--" + c.color + ")" : "") + '" data-e-cat="' + c.id + '">' +
+    (t.categoryId === c.id ? "" : '<span class="dot ' + c.color + '"></span>') + escapeHtml(c.name) + "</button>"
+  ).join("");
+  const personChips = ["sergio", "rita", "both"].map((p) =>
+    '<button class="chip ' + (t.assignedTo === p ? "active" : "") + '" data-e-person="' + p + '">' + personLabel(p) + "</button>"
+  ).join("");
+  const priorityChips = PRIORITIES.map((p) =>
+    '<button class="chip ' + (t.priority === p ? "active" : "") + '" data-e-priority="' + p + '"><span class="pflag ' + p + '"></span>' + PRIORITY_LABEL[p] + "</button>"
+  ).join("");
+  const statusChips = [["upcoming","Upcoming"],["in_progress","In Progress"],["waiting","Waiting"],["completed","Completed"]].map(([k,l]) =>
+    '<button class="chip ' + (t.status === k ? "active" : "") + '" data-e-status="' + k + '">' + l + "</button>"
+  ).join("");
+  const recChips = [["none","None"],["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"],["yearly","Yearly"]].map(([k,l]) =>
+    '<button class="chip ' + ((t.recurrence.frequency||"none") === k ? "active" : "") + '" data-e-recur="' + k + '">' + l + "</button>"
+  ).join("");
+  const money = catById(t.categoryId).tracksMoney;
+  const amountField = !money ? "" :
+    '<div class="field"><label>AMOUNT</label>' +
+      '<div class="chip-row" style="margin-bottom:8px">' +
+        '<button class="chip ' + (t.flowType === "expense" ? "active" : "") + '" data-e-flow="expense">Expense</button>' +
+        '<button class="chip ' + (t.flowType === "income" ? "active" : "") + '" data-e-flow="income">Income</button>' +
+      "</div>" +
+      '<input type="number" inputmode="decimal" step="0.01" min="0" id="e-amount" placeholder="0.00" value="' + (t.amount != null ? t.amount : "") + '">' +
+      '<label class="check-label" style="margin-top:10px"><input type="checkbox" id="e-showCal" ' + (t.showOnCalendar !== false ? "checked" : "") + '> Show on calendar</label>' +
+    "</div>";
+
+  return (
+    '<div class="back-row"><button class="icon-btn" id="cancelEdit"><svg><use href="#ic-close"/></svg></button><span class="title">Edit task</span></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+      '<input class="title-input" id="e-title" placeholder="What needs to be done?" value="' + escapeHtml(t.title) + '">' +
+      '<div class="field"><label>WHEN</label><div style="display:flex;gap:8px;margin-bottom:8px">' +
+        '<input type="date" id="e-startDate" value="' + (t.startDate||"") + '" style="flex:1">' +
+        '<input type="time" id="e-startTime" value="' + (t.startTime||"") + '" style="flex:1">' +
+      "</div><div style=\"display:flex;gap:8px\">" +
+        '<input type="date" id="e-endDate" value="' + (t.endDate||"") + '" placeholder="End date" style="flex:1">' +
+        '<input type="time" id="e-endTime" value="' + (t.endTime||"") + '" style="flex:1">' +
+      "</div></div>" +
+      '<div class="field"><label>ASSIGNED TO</label><div class="chip-row">' + personChips + "</div></div>" +
+      '<div class="field"><label>CATEGORY</label><div class="chip-row">' + catChips + "</div></div>" +
+      amountField +
+      '<div class="field"><label>PRIORITY</label><div class="chip-row">' + priorityChips + "</div></div>" +
+      '<div class="field"><label>STATUS</label><div class="chip-row">' + statusChips + "</div></div>" +
+      '<div class="field"><label>LOCATION NAME</label><input type="text" id="e-locName" value="' + escapeHtml(t.locationName) + '"></div>' +
+      '<div class="field"><label>ADDRESS</label><input type="text" id="e-locAddr" value="' + escapeHtml(t.locationAddress) + '"></div>' +
+      '<div class="field"><label>MAPS LINK</label><input type="text" id="e-mapsUrl" placeholder="https://maps.google.com/..." value="' + escapeHtml(t.mapsUrl) + '"></div>' +
+      '<div class="field"><label>NOTES</label><textarea id="e-notes">' + escapeHtml(t.notes) + "</textarea></div>" +
+      '<div class="field"><label>RECURRENCE</label><div class="chip-row">' + recChips + "</div></div>" +
+      '<button class="btn" id="saveEdit" style="margin:8px 0 40px">Save changes</button>' +
+    "</div>"
+  );
+}
+
+function afterTaskEditRender(id) {
+  const t = S.tasks.find((x) => x.id === id);
+  if (!t) { navigate("#/today"); return; }
+
+  // Keep the in-memory draft in sync as the user types, so switching a chip
+  // (category/person/priority/status/recurrence) — which re-renders this
+  // screen from `t` — never discards anything already typed.
+  const syncField = (elId, prop, transform) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const handler = () => { t[prop] = transform ? transform(el.value) : el.value; };
+    el.addEventListener("input", handler);
+    el.addEventListener("change", handler);
+  };
+  syncField("e-title", "title");
+  syncField("e-startDate", "startDate");
+  syncField("e-startTime", "startTime", (v) => v || null);
+  syncField("e-endDate", "endDate", (v) => v || null);
+  syncField("e-endTime", "endTime", (v) => v || null);
+  syncField("e-locAddr", "locationAddress");
+  syncField("e-mapsUrl", "mapsUrl");
+  syncField("e-notes", "notes");
+  syncField("e-amount", "amount", (v) => (v === "" ? null : Number(v)));
+  const showCalEl = document.getElementById("e-showCal");
+  if (showCalEl) showCalEl.addEventListener("change", () => { t.showOnCalendar = showCalEl.checked; });
+
+  // Location name gets special handling: if you paste (or type, then move on)
+  // a full maps URL in there, treat it as the maps link instead — no need to
+  // juggle two fields for the same thing.
+  const locNameEl = document.getElementById("e-locName");
+  const mapsUrlEl = document.getElementById("e-mapsUrl");
+  const applyLocNameValue = (raw) => {
+    const val = (raw || "").trim();
+    if (isLikelyUrl(val)) {
+      if (mapsUrlEl) mapsUrlEl.value = val;
+      t.mapsUrl = val;
+      const friendly = extractPlaceNameFromMapsUrl(val);
+      if (locNameEl) locNameEl.value = friendly || "";
+      t.locationName = friendly || "";
+      showToast(friendly ? "Detected a maps link \u2014 saved as \u201c" + friendly + "\u201d" : "Detected a maps link \u2014 added to the Maps link field");
+    } else {
+      t.locationName = raw;
+    }
+  };
+  if (locNameEl) {
+    locNameEl.addEventListener("paste", (e) => {
+      const text = (e.clipboardData || window.clipboardData).getData("text");
+      if (isLikelyUrl(text)) {
+        e.preventDefault();
+        applyLocNameValue(text);
+      }
+    });
+    locNameEl.addEventListener("input", () => {
+      if (!isLikelyUrl(locNameEl.value)) t.locationName = locNameEl.value;
+    });
+    locNameEl.addEventListener("change", () => applyLocNameValue(locNameEl.value));
+  }
+
+  document.getElementById("cancelEdit").onclick = () => navigate("#/task/" + id);
+  document.querySelectorAll("[data-e-cat]").forEach((el) => el.onclick = () => {
+    t.categoryId = el.getAttribute("data-e-cat");
+    if (catById(t.categoryId).tracksMoney && !t.flowType) t.flowType = "expense";
+    document.getElementById("view").innerHTML = renderTaskEditFullscreen(id); afterTaskEditRender(id);
+  });
+  document.querySelectorAll("[data-e-person]").forEach((el) => el.onclick = () => { t.assignedTo = el.getAttribute("data-e-person"); document.getElementById("view").innerHTML = renderTaskEditFullscreen(id); afterTaskEditRender(id); });
+  document.querySelectorAll("[data-e-priority]").forEach((el) => el.onclick = () => { t.priority = el.getAttribute("data-e-priority"); document.getElementById("view").innerHTML = renderTaskEditFullscreen(id); afterTaskEditRender(id); });
+  document.querySelectorAll("[data-e-flow]").forEach((el) => el.onclick = () => { t.flowType = el.getAttribute("data-e-flow"); document.getElementById("view").innerHTML = renderTaskEditFullscreen(id); afterTaskEditRender(id); });
+  document.querySelectorAll("[data-e-status]").forEach((el) => el.onclick = () => { t.status = el.getAttribute("data-e-status"); document.getElementById("view").innerHTML = renderTaskEditFullscreen(id); afterTaskEditRender(id); });
+  document.querySelectorAll("[data-e-recur]").forEach((el) => el.onclick = () => { t.recurrence = { frequency: el.getAttribute("data-e-recur") }; document.getElementById("view").innerHTML = renderTaskEditFullscreen(id); afterTaskEditRender(id); });
+
+  document.getElementById("saveEdit").onclick = async () => {
+    t.title = document.getElementById("e-title").value.trim() || t.title;
+    t.startDate = document.getElementById("e-startDate").value || t.startDate;
+    const st = document.getElementById("e-startTime").value;
+    t.startTime = st || null;
+    t.allDay = !st;
+    t.endDate = document.getElementById("e-endDate").value || null;
+    t.endTime = document.getElementById("e-endTime").value || null;
+    t.locationName = document.getElementById("e-locName").value.trim();
+    t.locationAddress = document.getElementById("e-locAddr").value.trim();
+    t.mapsUrl = document.getElementById("e-mapsUrl").value.trim();
+    t.notes = document.getElementById("e-notes").value;
+    if (!catById(t.categoryId).tracksMoney) { t.amount = null; t.flowType = null; }
+    await saveTask(t);
+    if (t.recurrence && t.recurrence.frequency !== "none" && !t.recurrenceId) {
+      const count = await generateRecurrenceInstances(t);
+      showToast("Changes saved \u2014 " + count + " upcoming occurrences created");
+    } else {
+      showToast("Changes saved");
+    }
+    navigate("#/task/" + id);
+  };
+}
+
+/* ---------------- CATEGORIES ---------------- */
+function renderCategories() {
+  const rows = S.categories.map((c) =>
+    '<div class="list-row"><span class="dot ' + c.color + '" style="margin-right:2px"></span>' +
+    '<span class="lbl">' + escapeHtml(c.name) + (c.tracksMoney ? ' <span style="color:var(--text2);font-weight:500">\u20ac</span>' : "") + "</span>" +
+    '<button class="icon-btn" style="width:34px;height:34px" data-edit-cat="' + c.id + '"><svg style="width:15px;height:15px"><use href="#ic-edit"/></svg></button>' +
+    '<button class="icon-btn" style="width:34px;height:34px" data-del-cat="' + c.id + '"><svg style="width:15px;height:15px"><use href="#ic-trash"/></svg></button>' +
+    "</div>"
+  ).join("");
+  return (
+    '<div class="back-row"><button class="icon-btn" data-nav="#/more"><svg><use href="#ic-back"/></svg></button><span class="title">Categories</span></div>' +
+    '<div style="padding:0 var(--sp-lg)"><div class="card">' + rows + "</div>" +
+    '<button class="btn secondary" id="addCategoryBtn" style="margin-top:16px">+ Add category</button></div>'
+  );
+}
+function afterCategoriesRender() {
+  document.querySelectorAll("[data-nav]").forEach((b) => b.onclick = () => navigate(b.getAttribute("data-nav")));
+  document.getElementById("addCategoryBtn").onclick = () => openCategoryEditor(null);
+  document.querySelectorAll("[data-edit-cat]").forEach((el) => el.onclick = () => openCategoryEditor(el.getAttribute("data-edit-cat")));
+  document.querySelectorAll("[data-del-cat]").forEach((el) => el.onclick = async () => {
+    await deleteCategoryById(el.getAttribute("data-del-cat"));
+    render();
+    showToast("Category deleted");
+  });
+}
+function openCategoryEditor(id) {
+  const existing = id ? catById(id) : { id: null, name: "", color: "olive", tracksMoney: true };
+  const colors = ["olive","brown","terracotta","beige","nude","grey"];
+  openSheet(
+    '<div class="sheet-head"><span class="title">' + (id ? "Edit category" : "New category") + '</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<div class="field"><label>NAME</label><input type="text" id="catName" value="' + escapeHtml(existing.name) + '"></div>' +
+      '<div class="field"><label>COLOR</label><div class="chip-row">' +
+      colors.map((c) => '<button class="chip ' + (existing.color === c ? "active" : "") + '" data-cat-color="' + c + '"><span class="dot ' + c + '"></span></button>').join("") +
+      "</div></div>" +
+      '<div class="field"><label>TRACKS MONEY</label><div class="chip-row">' +
+        '<button class="chip ' + (existing.tracksMoney ? "active" : "") + '" data-cat-money="1">Yes \u2014 show amount field</button>' +
+        '<button class="chip ' + (!existing.tracksMoney ? "active" : "") + '" data-cat-money="0">No</button>' +
+      "</div></div>" +
+      '<button class="btn" id="saveCatBtn">Save</button>' +
+    "</div>"
+  );
+  let chosenColor = existing.color;
+  let chosenTracksMoney = !!existing.tracksMoney;
+  document.getElementById("closeSheetBtn").onclick = closeSheet;
+  document.querySelectorAll("[data-cat-color]").forEach((el) => el.onclick = () => { chosenColor = el.getAttribute("data-cat-color"); openCategoryEditor(id); });
+  document.querySelectorAll("[data-cat-money]").forEach((el) => el.onclick = () => { chosenTracksMoney = el.getAttribute("data-cat-money") === "1"; openCategoryEditor(id); });
+  document.getElementById("saveCatBtn").onclick = async () => {
+    const name = document.getElementById("catName").value.trim();
+    if (!name) { showToast("Give the category a name."); return; }
+    const cat = { id: existing.id || uid(), name, color: chosenColor, tracksMoney: chosenTracksMoney };
+    await saveCategory(cat);
+    closeSheet();
+    render();
+  };
+}
+
+/* ---------------- FINANCE CALCULATIONS ----------------
+ * Design notes / documented assumptions (per the brief's requirement not to
+ * make silent financial assumptions):
+ *
+ * - Only tasks whose category has tracksMoney=true AND that have an amount +
+ *   flowType set are "money tasks". Everything below only looks at those.
+ * - "completed" status doubles as paid (expense) / received (income) — no
+ *   separate paid flag, reusing Together's existing completion mechanism.
+ * - Current Balance, Safe to Spend, and Needs Attention / Coming Up are
+ *   always real-time (tied to today), REGARDLESS of which month is selected
+ *   in the dashboard's month switcher — "how much do we have" and "what
+ *   needs attention" are present-tense questions.
+ * - Expected/Actual/Variance, Cash Flow, Checklist, Category Snapshot,
+ *   Month-over-month and Balance Trend all scope to the SELECTED month.
+ * - Recurring bills are already materialized as real future task rows by
+ *   Together's existing recurrence engine (8 occurrences ahead), so no
+ *   separate projection engine is needed here — future months' expected
+ *   figures come from real rows, same as any other task.
+ * ------------------------------------------------------- */
+function moneyTasks() {
+  return S.tasks.filter((t) => t.amount != null && t.flowType && catById(t.categoryId).tracksMoney);
+}
+function signedAmount(t) { return t.flowType === "income" ? Number(t.amount) : -Number(t.amount); }
+
+function completedNetUpTo(dateIsoInclusive) {
+  let net = 0;
+  for (const t of moneyTasks()) {
+    if (t.status !== "completed") continue;
+    if (t.startDate > dateIsoInclusive) continue;
+    net += signedAmount(t);
+  }
+  return net;
+}
+function openingSum() { return S.accounts.reduce((s, a) => s + (Number(a.openingBalance) || 0), 0); }
+function currentBalance() { return openingSum() + completedNetUpTo(todayISO()); }
+
+function tasksInRange(startIso, endIso, flowType) {
+  return moneyTasks().filter((t) => t.startDate >= startIso && t.startDate <= endIso && (!flowType || t.flowType === flowType));
+}
+function sumAmounts(tasks) { return tasks.reduce((s, t) => s + Number(t.amount), 0); }
+function completedNetInRange(startIso, endIso) {
+  return sumAmounts(tasksInRange(startIso, endIso, "income").filter((t) => t.status === "completed"))
+    - sumAmounts(tasksInRange(startIso, endIso, "expense").filter((t) => t.status === "completed"));
+}
+
+// Balance at the start of a given month is simply what the user told us at
+// the start of THAT month \u2014 the monthly check-in is a start-of-month
+// anchor, not a running "current balance". Falls back to the old
+// account-derived total only for months before this feature existed.
+function balanceAtStartOfMonth(monthAnchorIso) {
+  const snap = getSnapshot(monthKeyOf(monthAnchorIso));
+  if (snap) return snap.amount;
+  if (S.accounts.length > 0) return openingSum() + completedNetUpTo(addDaysISO(monthStartISO(monthAnchorIso), -1));
+  return null;
+}
+
+// Current Balance is LIVE: the month's starting anchor plus whatever has
+// actually been checked off (paid/received) since then. Every time you tick
+// something off in the checklist, this number moves \u2014 that's the whole point.
+function currentBalanceFor(monthAnchorIso) {
+  const start = balanceAtStartOfMonth(monthAnchorIso);
+  if (start == null) return null;
+  const monthStart = monthStartISO(monthAnchorIso), monthEnd = monthEndISO(monthAnchorIso), today = todayISO();
+  const cutoff = today < monthStart ? monthStart : (today > monthEnd ? monthEnd : today);
+  return start + completedNetInRange(monthStart, cutoff);
+}
+// The real-time balance for whatever the actual current month is, regardless
+// of which month is being browsed in the dashboard \u2014 used for Safe to Spend.
+function bestCurrentBalance() { return currentBalanceFor(todayISO()); }
+
+// The stable end-of-month target: start-of-month balance plus EVERY income
+// and expense added for the month, whether checked off yet or not. This
+// doesn't move as things get checked off \u2014 it's the plan, not the progress.
+function expectedEndOfMonthFor(monthAnchorIso) {
+  const start = balanceAtStartOfMonth(monthAnchorIso);
+  if (start == null) return null;
+  const mStart = monthStartISO(monthAnchorIso), mEnd = monthEndISO(monthAnchorIso);
+  const net = sumAmounts(tasksInRange(mStart, mEnd, "income")) - sumAmounts(tasksInRange(mStart, mEnd, "expense"));
+  return start + net;
+}
+
+function computeFinanceSnapshot(monthAnchorIso) {
+  const monthStart = monthStartISO(monthAnchorIso);
+  const monthEnd = monthEndISO(monthAnchorIso);
+  const today = todayISO();
+  const monthKey = monthKeyOf(monthAnchorIso);
+  const isCurrentRealMonth = monthKey === monthKeyOf(today);
+  const isFutureMonth = monthStart > today;
+  const hasAccounts = S.accounts.length > 0 || S.balanceSnapshots.length > 0; // "do we have any baseline at all"
+
+  const snapshotThisMonth = getSnapshot(monthKey);
+  const needsCheckIn = isCurrentRealMonth && !snapshotThisMonth;
+
+  const balanceAtMonthStart = balanceAtStartOfMonth(monthAnchorIso);
+
+  // Current Balance: live, moves every time something gets checked off.
+  // Only knowable once this month has a starting anchor (a snapshot, or an
+  // account to derive one from).
+  const currentBalanceForMonth = currentBalanceFor(monthAnchorIso);
+
+  // Expected End of Month: the stable plan, built from EVERY income/expense
+  // added for the month regardless of whether it's been checked off yet.
+  // This does not change as items get checked off \u2014 only as items are
+  // added, edited, or removed.
+  const expectedIncomeMonth = sumAmounts(tasksInRange(monthStart, monthEnd, "income"));
+  const expectedExpenseMonth = sumAmounts(tasksInRange(monthStart, monthEnd, "expense"));
+  const expectedNetMonth = expectedIncomeMonth - expectedExpenseMonth;
+  const expectedEndBalance = balanceAtMonthStart != null ? balanceAtMonthStart + expectedNetMonth : null;
+
+  // Checked off so far \u2014 this is what's actually driving Current Balance.
+  const actualIncomeMonth = sumAmounts(tasksInRange(monthStart, monthEnd, "income").filter((t) => t.status === "completed"));
+  const actualExpenseMonth = sumAmounts(tasksInRange(monthStart, monthEnd, "expense").filter((t) => t.status === "completed"));
+  const actualNetMonth = actualIncomeMonth - actualExpenseMonth;
+
+  const remainingItems = tasksInRange(monthStart, monthEnd, "expense").filter((t) => t.status !== "completed")
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const remainingTotal = sumAmounts(remainingItems);
+
+  // Safe to Spend is always about *this real month*, independent of the
+  // month currently being browsed in the dashboard.
+  const curStart = monthStartISO(today), curEnd = monthEndISO(today);
+  const currentMonthRemaining = sumAmounts(tasksInRange(curStart, curEnd, "expense").filter((t) => t.status !== "completed"));
+  const safeToSpend = bestCurrentBalance() != null ? bestCurrentBalance() - currentMonthRemaining : null;
+
+  // Needs attention / Coming up: always real-time, not month-filtered.
+  const unpaid = moneyTasks().filter((t) => t.flowType === "expense" && t.status !== "completed");
+  const needsAttention = unpaid.filter((t) => t.startDate <= today).sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const comingUp = moneyTasks().filter((t) => t.status !== "completed" && t.startDate > today)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, 6);
+
+  // Checklist: every money task due this month (paid or not). Checking one
+  // off here is exactly what moves Current Balance above.
+  const checklist = tasksInRange(monthStart, monthEnd).sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const checklistDone = checklist.filter((t) => t.status === "completed").length;
+
+  // Recent activity: completed money tasks this month, most recent first.
+  const recent = tasksInRange(monthStart, monthEnd).filter((t) => t.status === "completed")
+    .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)).slice(0, 6);
+
+  // Category snapshot: actual (completed) expense total per category, this month.
+  const catTotals = {};
+  for (const t of tasksInRange(monthStart, monthEnd, "expense").filter((t) => t.status === "completed")) {
+    catTotals[t.categoryId] = (catTotals[t.categoryId] || 0) + Number(t.amount);
+  }
+  const categorySnapshot = Object.entries(catTotals)
+    .map(([catId, total]) => ({ cat: catById(catId), total }))
+    .sort((a, b) => b.total - a.total).slice(0, 5);
+
+  // Month-over-month (previous full calendar month), using completed totals only.
+  const prevAnchor = addMonthsISO(monthStart, -1);
+  const prevMonthStartBalance = balanceAtStartOfMonth(prevAnchor);
+  let momCompare = null;
+  if (currentBalanceForMonth != null && prevMonthStartBalance != null) {
+    const prevStart = monthStartISO(prevAnchor), prevEnd = monthEndISO(prevAnchor);
+    const prevIncome = sumAmounts(tasksInRange(prevStart, prevEnd, "income").filter((t) => t.status === "completed"));
+    const prevExpense = sumAmounts(tasksInRange(prevStart, prevEnd, "expense").filter((t) => t.status === "completed"));
+    momCompare = {
+      incomeDelta: actualIncomeMonth - prevIncome,
+      expenseDelta: actualExpenseMonth - prevExpense,
+      endBalanceDelta: currentBalanceForMonth - prevMonthStartBalance,
+    };
+  }
+
+  let status = "NEEDS CHECK-IN", statusText = "Enter this month's starting balance to begin tracking.";
+  if (!needsCheckIn) {
+    if (isFutureMonth) { status = "PROJECTED"; statusText = "This month hasn't started yet \u2014 figures below are a projection based on what's already planned."; }
+    else { status = "TRACKING"; statusText = "Current Balance updates as you check items off below."; }
+  }
+
+  // The number you actually asked for: what did last month's ending balance
+  // turn out to be (the balance you entered starting THIS month) versus what
+  // was expected for it (from everything that was added) \u2014 the gap is
+  // money that moved outside anything logged here, in either direction.
+  const prevExpectedEnd = expectedEndOfMonthFor(prevAnchor);
+  const priorMonth = (snapshotThisMonth && prevExpectedEnd != null) ? {
+    label: monthLong(prevAnchor),
+    actualEnd: balanceAtMonthStart,
+    expectedEnd: prevExpectedEnd,
+    difference: balanceAtMonthStart - prevExpectedEnd,
+  } : null;
+
+  return {
+    monthStart, monthEnd, hasAccounts, monthKey, snapshotThisMonth, needsCheckIn, isFutureMonth, isCurrentRealMonth,
+    balanceAtMonthStart, currentBalanceForMonth,
+    expectedIncomeMonth, expectedExpenseMonth, expectedNetMonth, expectedEndBalance,
+    actualIncomeMonth, actualExpenseMonth, actualNetMonth,
+    remainingItems, remainingTotal, safeToSpend, currentMonthRemaining,
+    needsAttention, comingUp, checklist, checklistDone, recent, categorySnapshot, momCompare,
+    status, statusText, priorMonth,
+  };
+}
+
+
+// Combined balance shown on the Accounts screen is the same figure as the
+// dashboard's Current Balance \u2014 one calculation, not two. Prefers a
+// month's entered check-in over the derived total, same as the dashboard.
+function accountsTotal() { return bestCurrentBalance(); }
+function renderAccounts() {
+  const rows = S.accounts.map((a) =>
+    '<div class="list-row"><span class="lbl">' + escapeHtml(a.name) + "</span>" +
+    '<span class="val">' + fmtMoney(a.openingBalance) + ' opening</span>' +
+    '<button class="icon-btn" style="width:34px;height:34px" data-edit-acc="' + a.id + '"><svg style="width:15px;height:15px"><use href="#ic-edit"/></svg></button>' +
+    '<button class="icon-btn" style="width:34px;height:34px" data-del-acc="' + a.id + '"><svg style="width:15px;height:15px"><use href="#ic-trash"/></svg></button>' +
+    "</div>"
+  ).join("") || '<div class="empty" style="padding:24px 0"><h3>No accounts yet.</h3><p>Add one to start tracking your balance.</p></div>';
+  return (
+    '<div class="back-row"><button class="icon-btn" data-nav="#/more"><svg><use href="#ic-back"/></svg></button><span class="title">Accounts</span></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+      '<div class="card" style="margin-bottom:16px"><div class="list-row"><span class="lbl">Combined balance</span><span class="val" style="font-weight:750;color:var(--text)">' + fmtMoney(accountsTotal()) + '</span></div></div>' +
+      '<p style="color:var(--text2);font-size:13px;margin:-8px 0 16px">Each account\u2019s opening balance plus everything you\u2019ve marked paid or received, all-time \u2014 accounts aren\u2019t tracked per-transaction individually.</p>' +
+      '<div class="card">' + rows + "</div>" +
+      '<button class="btn secondary" id="addAccountBtn" style="margin-top:16px">+ Add account</button>' +
+    "</div>"
+  );
+}
+function afterAccountsRender() {
+  document.querySelectorAll("[data-nav]").forEach((b) => b.onclick = () => navigate(b.getAttribute("data-nav")));
+  document.getElementById("addAccountBtn").onclick = () => openAccountEditor(null);
+  document.querySelectorAll("[data-edit-acc]").forEach((el) => el.onclick = () => openAccountEditor(el.getAttribute("data-edit-acc")));
+  document.querySelectorAll("[data-del-acc]").forEach((el) => el.onclick = async () => {
+    await deleteAccountById(el.getAttribute("data-del-acc"));
+    render();
+    showToast("Account deleted");
+  });
+}
+function openAccountEditor(id) {
+  const existing = id ? S.accounts.find((a) => a.id === id) : { id: null, name: "", openingBalance: 0, openingDate: todayISO() };
+  openSheet(
+    '<div class="sheet-head"><span class="title">' + (id ? "Edit account" : "New account") + '</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<div class="field"><label>NAME</label><input type="text" id="accName" placeholder="Main Account" value="' + escapeHtml(existing.name) + '"></div>' +
+      '<div class="field"><label>OPENING BALANCE</label><input type="number" inputmode="decimal" step="0.01" id="accBalance" value="' + existing.openingBalance + '"></div>' +
+      '<p style="color:var(--text2);font-size:13px;margin:-4px 0 16px">What was in this account when you started tracking it here \u2014 not required to be today.</p>' +
+      '<button class="btn" id="saveAccBtn">Save</button>' +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = closeSheet;
+  document.getElementById("saveAccBtn").onclick = async () => {
+    const name = document.getElementById("accName").value.trim();
+    if (!name) { showToast("Give the account a name."); return; }
+    const openingBalance = Number(document.getElementById("accBalance").value) || 0;
+    const acc = { id: existing.id || uid(), name, openingBalance, openingDate: existing.openingDate || todayISO(), createdAt: existing.createdAt || Date.now() };
+    await saveAccount(acc);
+    closeSheet();
+    render();
+  };
+}
+
+/* ---------------- FINANCE DASHBOARD ---------------- */
+function renderFinanceDashboard() {
+  const anchor = S.financeMonthAnchor;
+  const monthLabel = monthLong(anchor) + " " + isoToDate(anchor).getFullYear();
+
+  const header =
+    '<div class="topbar"><h1>Financial Dashboard</h1></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+    '<div class="cal-nav" style="margin-bottom:16px">' +
+      '<button class="icon-btn" id="finPrev"><svg style="transform:rotate(180deg)"><use href="#ic-chevron"/></svg></button>' +
+      '<span class="month">' + monthLabel + "</span>" +
+      '<button class="icon-btn" id="finNext"><svg><use href="#ic-chevron"/></svg></button>' +
+    "</div>";
+
+  const snap = computeFinanceSnapshot(anchor);
+  let html = header;
+
+  // ---- Monthly check-in: a start-of-month anchor, asked once per month.
+  // This is NOT a running balance you edit whenever \u2014 it's the fixed
+  // starting point; Current Balance moves on its own as you check things off.
+  if (snap.needsCheckIn) {
+    html += '<div class="card" style="padding:20px;margin-bottom:16px">' +
+      '<h3 style="margin:0 0 4px">What\u2019s your balance at the start of ' + monthLong(anchor) + "?</h3>" +
+      '<p style="color:var(--text2);margin:0 0 12px">Check your account(s) and enter the total. From here, Current Balance below updates automatically as you check things off \u2014 you won\u2019t need to re-enter it until next month.</p>' +
+      '<div style="display:flex;gap:8px">' +
+        '<input type="number" inputmode="decimal" step="0.01" id="finCheckinAmount" placeholder="0.00" style="flex:1">' +
+        '<button class="btn" id="finCheckinSave" style="width:auto;padding:0 20px">Save</button>' +
+      "</div></div>";
+  }
+
+  // ---- Hero: Current Balance (live) and Expected End of Month (the stable plan) ----
+  // Skip this card entirely when the check-in form above already asks for
+  // exactly the same missing thing — showing both is redundant.
+  if (snap.currentBalanceForMonth == null && !snap.needsCheckIn) {
+    const futureMsg = snap.expectedEndBalance != null
+      ? "Projected end of month: " + fmtMoney(snap.expectedEndBalance)
+      : "We need a starting balance for an earlier month first \u2014 enter one from Accounts, or wait until this month starts.";
+    html += '<div class="card" style="padding:20px;margin-bottom:16px">' +
+      '<h3 style="margin:0 0 4px">' + (snap.isFutureMonth ? "Projected balance" : "No balance recorded for " + monthLong(anchor)) + "</h3>" +
+      '<p style="color:var(--text2);margin:0">' + (snap.isFutureMonth ? futureMsg : "This month is in the past and has no starting balance on file.") + "</p>" +
+    "</div>";
+  } else if (snap.currentBalanceForMonth != null) {
+    html += '<div class="card fin-hero">' +
+      '<div class="fin-hero-main">' +
+        '<div class="fin-label">CURRENT BALANCE</div>' +
+        '<div class="fin-big">' + fmtMoney(snap.currentBalanceForMonth) + "</div>" +
+      "</div>" +
+      '<div class="fin-hero-sub">' +
+        '<div><span class="fin-label">EXPECTED END OF ' + monthLong(anchor).toUpperCase() + '</span><span class="fin-mid">' + fmtMoney(snap.expectedEndBalance) + "</span></div>" +
+      "</div>" +
+      '<p class="fin-status-text">' + escapeHtml(snap.statusText) + "</p>" +
+      '<button class="link-btn" id="finEditBalance" style="margin-top:4px">' + (snap.snapshotThisMonth ? "Edit this month\u2019s starting balance" : "Manage accounts") + "</button>" +
+    "</div>";
+  }
+
+  // ---- Last month: the number you actually asked for \u2014 how much moved
+  // outside anything logged here (spent freely, or extra income), in either direction ----
+  if (snap.priorMonth) {
+    const pm = snap.priorMonth;
+    const freeText = Math.abs(pm.difference) < 1
+      ? "Right on plan \u2014 no unplanned spending or income."
+      : (pm.difference < 0
+          ? "You spent " + fmtMoney(Math.abs(pm.difference)) + " outside your planned expenses."
+          : "You ended up with " + fmtMoney(pm.difference) + " more than planned \u2014 from unlogged income or lighter spending.");
+    html += '<div class="card" style="margin-top:12px">' +
+      '<div class="fin-label">' + pm.label.toUpperCase() + ": FREE SPENDING</div>" +
+      '<div class="list-row"><span class="lbl">Expected end of ' + pm.label + '</span><span class="val">' + fmtMoney(pm.expectedEnd) + "</span></div>" +
+      '<div class="list-row"><span class="lbl">What you started this month with</span><span class="val">' + fmtMoney(pm.actualEnd) + "</span></div>" +
+      '<div class="list-row"><span class="lbl" style="font-weight:700">Difference</span><span class="val ' + (pm.difference < 0 ? "expense" : "income") + '" style="font-weight:700">' + fmtMoneySigned(pm.difference) + "</span></div>" +
+      '<p style="color:var(--text2);font-size:13px;margin:8px 0 0">' + freeText + "</p>" +
+    "</div>";
+  }
+
+  html += '<div class="card" style="margin-top:12px">' +
+    '<div class="fin-label">SAFE TO SPEND</div>' +
+    (snap.safeToSpend != null
+      ? '<div class="fin-big" style="margin:4px 0">' + fmtMoney(snap.safeToSpend) + "</div><p style=\"color:var(--text2);margin:0\">After remaining commitments this month" + (snap.currentMonthRemaining ? " (" + fmtMoney(snap.currentMonthRemaining) + " left to pay)" : "") + "</p>"
+      : '<p style="color:var(--text2);margin:4px 0 0">Enter this month\u2019s starting balance to see what\u2019s safe to spend.</p>') +
+  "</div>";
+
+  html += '<div class="section-label">NEEDS ATTENTION</div>';
+  if (snap.needsAttention.length === 0) {
+    html += '<div class="card"><p style="color:var(--text2);margin:0">Nothing needs attention right now.</p></div>';
+  } else {
+    html += '<p style="color:var(--text2);font-size:13px;margin:-4px 0 8px">' + snap.needsAttention.length + " item" + (snap.needsAttention.length === 1 ? "" : "s") + " need review</p>" +
+      '<div class="card">' + snap.needsAttention.map(taskRowHtml).join("") + "</div>";
+  }
+
+  html += '<div class="section-label">' + monthLong(anchor).toUpperCase() + " CHECKLIST</div>";
+  if (snap.checklist.length === 0) {
+    html += '<div class="card"><p style="color:var(--text2);margin:0">No financial items this month.</p></div>';
+  } else {
+    html += '<p style="color:var(--text2);font-size:13px;margin:-4px 0 8px">' + snap.checklistDone + " / " + snap.checklist.length + " completed \u2014 checking one off updates Current Balance above</p>" +
+      '<div class="card">' + snap.checklist.map(taskRowHtml).join("") + "</div>";
+  }
+
+  // ---- Transparency: what's driving each number above, with no judgment attached ----
+  html += '<div class="section-label">HOW THESE NUMBERS ARE MADE UP</div>';
+  html += '<div class="card">' +
+    '<div class="list-row"><span class="lbl" style="font-weight:700">This month\u2019s plan</span><span class="val" style="color:var(--text2)">everything added</span></div>' +
+    '<div class="list-row"><span class="lbl">Income</span><span class="val">' + fmtMoney(snap.expectedIncomeMonth) + "</span></div>" +
+    '<div class="list-row"><span class="lbl">Expenses</span><span class="val">' + fmtMoney(snap.expectedExpenseMonth) + "</span></div>" +
+    '<div class="list-row"><span class="lbl" style="font-weight:700">\u2192 Expected end of month</span><span class="val" style="font-weight:700">' + (snap.expectedEndBalance != null ? fmtMoney(snap.expectedEndBalance) : "\u2014") + "</span></div>" +
+  "</div>" +
+  '<div class="card" style="margin-top:8px">' +
+    '<div class="list-row"><span class="lbl" style="font-weight:700">Checked off so far</span><span class="val" style="color:var(--text2)">drives Current Balance</span></div>' +
+    '<div class="list-row"><span class="lbl">Income</span><span class="val">' + fmtMoney(snap.actualIncomeMonth) + "</span></div>" +
+    '<div class="list-row"><span class="lbl">Expenses</span><span class="val">' + fmtMoney(snap.actualExpenseMonth) + "</span></div>" +
+  "</div>";
+
+  html += '<div class="section-label">RECENT ACTIVITY</div>';
+  html += snap.recent.length === 0
+    ? '<div class="card"><p style="color:var(--text2);margin:0">Nothing completed yet this month.</p></div>'
+    : '<div class="card">' + snap.recent.map(taskRowHtml).join("") + '</div><button class="link-btn" id="finViewAll" style="margin-top:8px">View All</button>';
+
+  html += '<div class="section-label">WHERE YOUR MONEY WENT</div>';
+  if (snap.categorySnapshot.length === 0) {
+    html += '<div class="card"><p style="color:var(--text2);margin:0">No completed expenses yet this month.</p></div>';
+  } else {
+    const max = Math.max(...snap.categorySnapshot.map((c) => c.total));
+    html += '<div class="card">' + snap.categorySnapshot.map((c) =>
+      '<div class="cat-snap-row"><div class="cat-snap-top"><span class="dot ' + c.cat.color + '"></span><span class="lbl">' + escapeHtml(c.cat.name) + '</span><span class="val">' + fmtMoney(c.total) + "</span></div>" +
+      '<div class="cat-snap-bar-bg"><div class="cat-snap-bar" style="width:' + Math.round((c.total / max) * 100) + "%;background:var(--" + c.cat.color + ')"></div></div></div>'
+    ).join("") + "</div>";
+  }
+
+  if (snap.momCompare) {
+    const prevLabel = monthLong(addMonthsISO(snap.monthStart, -1));
+    html += '<div class="section-label">COMPARED WITH ' + prevLabel.toUpperCase() + "</div>" +
+      '<div class="card">' +
+        '<div class="list-row"><span class="lbl">Expenses</span><span class="val ' + (snap.momCompare.expenseDelta > 0 ? "expense" : "income") + '">' + fmtMoneySigned(snap.momCompare.expenseDelta) + "</span></div>" +
+        '<div class="list-row"><span class="lbl">Income</span><span class="val ' + (snap.momCompare.incomeDelta < 0 ? "expense" : "income") + '">' + fmtMoneySigned(snap.momCompare.incomeDelta) + "</span></div>" +
+        '<div class="list-row"><span class="lbl">Ending balance</span><span class="val ' + (snap.momCompare.endBalanceDelta < 0 ? "expense" : "income") + '">' + fmtMoneySigned(snap.momCompare.endBalanceDelta) + "</span></div>" +
+      "</div>";
+  }
+
+  html += "</div>";
+  return html;
+}
+
+function afterFinanceDashboardRender() {
+  const view = document.getElementById("view");
+  wireTaskRows(view);
+  view.querySelectorAll("[data-nav]").forEach((el) => el.onclick = () => navigate(el.getAttribute("data-nav")));
+  const prevBtn = document.getElementById("finPrev"), nextBtn = document.getElementById("finNext");
+  if (prevBtn) prevBtn.onclick = () => { S.financeMonthAnchor = addMonthsISO(S.financeMonthAnchor, -1); render(); };
+  if (nextBtn) nextBtn.onclick = () => { S.financeMonthAnchor = addMonthsISO(S.financeMonthAnchor, 1); render(); };
+  const viewAll = document.getElementById("finViewAll");
+  if (viewAll) viewAll.onclick = () => navigate("#/tasks");
+  const checkinSave = document.getElementById("finCheckinSave");
+  if (checkinSave) checkinSave.onclick = async () => {
+    const val = document.getElementById("finCheckinAmount").value;
+    if (val === "") { showToast("Enter an amount first."); return; }
+    await saveBalanceSnapshot(monthKeyOf(S.financeMonthAnchor), val);
+    render();
+    showToast("Balance saved for " + monthLong(S.financeMonthAnchor));
+  };
+  const editBalance = document.getElementById("finEditBalance");
+  if (editBalance) editBalance.onclick = () => {
+    const snap = getSnapshot(monthKeyOf(S.financeMonthAnchor));
+    if (!snap) { navigate("#/accounts"); return; }
+    openSheet(
+      '<div class="sheet-head"><span class="title">Edit ' + monthLong(S.financeMonthAnchor) + '\u2019s balance</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+      '<div class="sheet-body">' +
+        '<div class="field"><label>BALANCE</label><input type="number" inputmode="decimal" step="0.01" id="editCheckinAmount" value="' + snap.amount + '"></div>' +
+        '<button class="btn" id="editCheckinSave">Save</button>' +
+      "</div>"
+    );
+    document.getElementById("closeSheetBtn").onclick = closeSheet;
+    document.getElementById("editCheckinSave").onclick = async () => {
+      await saveBalanceSnapshot(monthKeyOf(S.financeMonthAnchor), document.getElementById("editCheckinAmount").value);
+      closeSheet();
+      render();
+    };
+  };
+}
+
+// Dedicated entry point for expenses/income, separate from the general task
+// composer — this is the one place money items get created.
+function openFinanceComposer() {
+  const moneyCats = S.categories.filter((c) => c.tracksMoney);
+  const draft = newTaskSkeleton();
+  draft.categoryId = (moneyCats.find((c) => c.id === "finance") || moneyCats[0] || S.categories[0]).id;
+  draft.flowType = "expense";
+  draft.showOnCalendar = false; // opt-in: finance entries don't clutter the calendar unless asked
+  let markPaid = false;
+
+  const render_ = () => {
+    if (moneyCats.length === 0) {
+      openSheet(
+        '<div class="sheet-head"><span class="title">Add expense or income</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+        '<div class="sheet-body"><p style="color:var(--text2)">No categories are set up to track money yet. Turn "Tracks money" on for a category first, in More \u2192 Categories.</p></div>'
+      );
+      document.getElementById("closeSheetBtn").onclick = closeSheet;
+      return;
+    }
+    const catChips = moneyCats.map((c) =>
+      '<button class="chip ' + (draft.categoryId === c.id ? "cat-active" : "") + '" style="' +
+      (draft.categoryId === c.id ? "background:var(--" + c.color + ")" : "") + '" data-fin-cat="' + c.id + '">' +
+      (draft.categoryId === c.id ? "" : '<span class="dot ' + c.color + '"></span>') + escapeHtml(c.name) + "</button>"
+    ).join("");
+    const personChips = ["sergio", "rita", "both"].map((p) =>
+      '<button class="chip ' + (draft.assignedTo === p ? "active" : "") + '" data-fin-person="' + p + '">' + personLabel(p) + "</button>"
+    ).join("");
+    const recChips = [["none","None"],["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"],["yearly","Yearly"]].map(([k,l]) =>
+      '<button class="chip ' + ((draft.recurrence.frequency||"none") === k ? "active" : "") + '" data-fin-recur="' + k + '">' + l + "</button>"
+    ).join("");
+
+    openSheet(
+      '<div class="sheet-head"><span class="title">Add expense or income</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+      '<div class="sheet-body">' +
+        '<div class="chip-row" style="margin-bottom:14px">' +
+          '<button class="chip ' + (draft.flowType === "expense" ? "active" : "") + '" data-fin-flow="expense">Expense</button>' +
+          '<button class="chip ' + (draft.flowType === "income" ? "active" : "") + '" data-fin-flow="income">Income</button>' +
+        "</div>" +
+        '<input class="title-input" id="finTitle" placeholder="What\u2019s it for?" value="' + escapeHtml(draft.title) + '">' +
+        '<div class="field"><label>AMOUNT</label><input type="number" inputmode="decimal" step="0.01" min="0" id="finAmount" placeholder="0.00" value="' + (draft.amount != null ? draft.amount : "") + '"></div>' +
+        '<div class="field"><label>DATE</label><input type="date" id="finDate" value="' + draft.startDate + '"></div>' +
+        '<div class="field"><label>CATEGORY</label><div class="chip-row">' + catChips + "</div></div>" +
+        '<div class="field"><label>ASSIGNED TO</label><div class="chip-row">' + personChips + "</div></div>" +
+        '<div class="field"><label>REPEATS</label><div class="chip-row">' + recChips + "</div></div>" +
+        '<div class="field"><label class="check-label"><input type="checkbox" id="finPaid" ' + (markPaid ? "checked" : "") + '> ' + (draft.flowType === "income" ? "Already received" : "Already paid") + "</label></div>" +
+        '<div class="field"><label class="check-label"><input type="checkbox" id="finShowCal" ' + (draft.showOnCalendar ? "checked" : "") + '> Show on calendar</label></div>' +
+        '<button class="btn" id="finSave">Add ' + (draft.flowType === "income" ? "Income" : "Expense") + "</button>" +
+      "</div>"
+    );
+
+    document.getElementById("closeSheetBtn").onclick = closeSheet;
+    document.getElementById("finTitle").oninput = (e) => { draft.title = e.target.value; };
+    document.getElementById("finAmount").oninput = (e) => { draft.amount = e.target.value === "" ? null : Number(e.target.value); };
+    document.getElementById("finDate").onchange = (e) => { draft.startDate = e.target.value; };
+    document.getElementById("finPaid").onchange = (e) => { markPaid = e.target.checked; };
+    document.getElementById("finShowCal").onchange = (e) => { draft.showOnCalendar = e.target.checked; };
+    document.querySelectorAll("[data-fin-flow]").forEach((el) => el.onclick = () => { draft.flowType = el.getAttribute("data-fin-flow"); render_(); });
+    document.querySelectorAll("[data-fin-cat]").forEach((el) => el.onclick = () => { draft.categoryId = el.getAttribute("data-fin-cat"); render_(); });
+    document.querySelectorAll("[data-fin-person]").forEach((el) => el.onclick = () => { draft.assignedTo = el.getAttribute("data-fin-person"); render_(); });
+    document.querySelectorAll("[data-fin-recur]").forEach((el) => el.onclick = () => { draft.recurrence = { frequency: el.getAttribute("data-fin-recur") }; render_(); });
+    document.getElementById("finSave").onclick = async () => {
+      const titleVal = document.getElementById("finTitle").value.trim();
+      if (!titleVal) { showToast("Give it a short description first."); return; }
+      if (draft.amount == null || draft.amount <= 0) { showToast("Enter an amount."); return; }
+      draft.title = titleVal;
+      draft.startDate = document.getElementById("finDate").value || todayISO();
+      draft.priority = "normal";
+      draft.status = markPaid ? "completed" : "upcoming";
+      draft.completedAt = markPaid ? Date.now() : null;
+      await createTaskWithRecurrence(draft);
+      closeSheet();
+      render();
+      showToast((draft.flowType === "income" ? "Income" : "Expense") + " added");
+    };
+    setTimeout(() => { const el = document.getElementById("finTitle"); if (el) el.focus(); }, 150);
+  };
+  render_();
+}
+
+function renderNotifications() {
+  const n = S.settings.notifications;
+  const permission = (typeof Notification !== "undefined") ? Notification.permission : "unsupported";
+  return (
+    '<div class="back-row"><button class="icon-btn" data-nav="#/more"><svg><use href="#ic-back"/></svg></button><span class="title">Notifications</span></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+    '<div class="card">' +
+      '<div class="list-row"><span class="lbl">Daily briefing (9:00 AM)</span><button class="toggle ' + (n.daily?"on":"") + '" id="toggleDaily"><span class="knob"></span></button></div>' +
+      '<div class="list-row"><span class="lbl">Task reminders</span><button class="toggle ' + (n.reminders?"on":"") + '" id="toggleReminders"><span class="knob"></span></button></div>' +
+    "</div>" +
+    '<div class="section-label">PERMISSION</div>' +
+    '<div class="card"><div class="list-row"><span class="lbl">Browser permission</span><span class="val">' + permission + "</span></div>" +
+    (permission !== "granted" ? '<button class="btn secondary" id="reqPerm" style="margin-top:12px">Enable notifications</button>' : "") +
+    "</div>" +
+    '<div class="section-label">GOOD TO KNOW</div>' +
+    '<div class="card"><p style="font-size:14px;color:var(--text2);line-height:1.6;margin:0">' +
+    "Reminders and the daily briefing are delivered while Together is open or running in the background on a device that keeps the browser tab alive. " +
+    "Browsers don\u2019t guarantee scheduled notifications when the app is fully closed \u2014 for fully reliable delivery on a closed phone, a server-side push service would be needed. " +
+    "We won\u2019t claim a reminder fired if it didn\u2019t." +
+    "</p></div>" +
+    "</div>"
+  );
+}
+function afterNotificationsRender() {
+  document.querySelectorAll("[data-nav]").forEach((b) => b.onclick = () => navigate(b.getAttribute("data-nav")));
+  document.getElementById("toggleDaily").onclick = async () => { S.settings.notifications.daily = !S.settings.notifications.daily; await saveSettings(); render(); };
+  document.getElementById("toggleReminders").onclick = async () => { S.settings.notifications.reminders = !S.settings.notifications.reminders; await saveSettings(); render(); };
+  const reqBtn = document.getElementById("reqPerm");
+  if (reqBtn) reqBtn.onclick = async () => {
+    if (typeof Notification === "undefined") { showToast("Notifications aren\u2019t supported in this browser."); return; }
+    const perm = await Notification.requestPermission();
+    S.settings.notifications.permission = perm;
+    await saveSettings();
+    render();
+  };
+}
+
+/* ---------------- MORE ---------------- */
+function renderMore() {
+  return (
+    '<div class="topbar"><h1>More</h1></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+    '<div class="section-label">FAMILY</div>' +
+    '<div class="card">' +
+      '<div class="list-row"><span class="lbl">' + escapeHtml(S.settings.names.sergio) + '</span><span class="val">You</span></div>' +
+      '<div class="list-row"><span class="lbl">' + escapeHtml(S.settings.names.rita) + "</span></div>" +
+      '<button class="link-btn" id="editNamesBtn" style="margin-top:6px">Edit names</button>' +
+    "</div>" +
+    '<div class="section-label">MONEY</div>' +
+    '<div class="card">' +
+      '<div class="list-row" data-nav="#/accounts" style="cursor:pointer"><span class="lbl">Accounts</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
+    "</div>" +
+    '<div class="section-label">ORGANIZE</div>' +
+    '<div class="card">' +
+      '<div class="list-row" data-nav="#/categories" style="cursor:pointer"><span class="lbl">Categories</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
+      '<div class="list-row" data-nav="#/notifications" style="cursor:pointer"><span class="lbl">Notifications</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
+    "</div>" +
+    '<div class="section-label">DATA</div>' +
+    '<div class="card">' +
+      '<button class="link-btn" id="exportBtn">Export data</button><br>' +
+      '<label class="link-btn" for="importInput" style="cursor:pointer">Import data</label>' +
+      '<input type="file" id="importInput" accept="application/json" style="display:none">' +
+    "</div>" +
+    '<div class="section-label">APPEARANCE</div>' +
+    '<div class="card"><div class="list-row"><span class="lbl">Light mode</span><span class="val">On</span></div>' +
+    '<div class="list-row"><span class="lbl">Dark mode</span><span class="val">Coming later</span></div></div>' +
+    '<div class="section-label">ABOUT</div>' +
+    '<div class="card"><div class="list-row"><span class="lbl">Together</span><span class="val">Version 1.0</span></div></div>' +
+    "</div>"
+  );
+}
+function afterMoreRender() {
+  document.querySelectorAll("[data-nav]").forEach((b) => b.onclick = () => navigate(b.getAttribute("data-nav")));
+  document.getElementById("editNamesBtn").onclick = () => {
+    openSheet(
+      '<div class="sheet-head"><span class="title">Family names</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+      '<div class="sheet-body">' +
+      '<div class="field"><label>YOUR NAME</label><input type="text" id="n1" value="' + escapeHtml(S.settings.names.sergio) + '"></div>' +
+      '<div class="field"><label>PARTNER\u2019S NAME</label><input type="text" id="n2" value="' + escapeHtml(S.settings.names.rita) + '"></div>' +
+      '<button class="btn" id="saveNames">Save</button>' +
+      "</div>"
+    );
+    document.getElementById("closeSheetBtn").onclick = closeSheet;
+    document.getElementById("saveNames").onclick = async () => {
+      S.settings.names = { sergio: document.getElementById("n1").value.trim() || "Sérgio", rita: document.getElementById("n2").value.trim() || "Rita" };
+      await saveSettings();
+      closeSheet();
+      render();
+    };
+  };
+  document.getElementById("exportBtn").onclick = exportData;
+  document.getElementById("importInput").onchange = importData;
+}
+
+/* ---------------- EXPORT / IMPORT ---------------- */
+function exportData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    settings: S.settings,
+    categories: S.categories,
+    tasks: S.tasks.map((t) => Object.assign({}, t, {
+      attachments: t.attachments.map((a) => ({ id: a.id, fileName: a.fileName, fileType: a.fileType, fileSize: a.fileSize })),
+    })),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "together-backup-" + todayISO() + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast("Backup downloaded");
+}
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) { showToast("That file doesn\u2019t look like a valid backup."); return; }
+    if (!data || !Array.isArray(data.tasks) || !Array.isArray(data.categories) || !data.settings) {
+      showToast("That file doesn\u2019t look like a valid backup.");
+      return;
+    }
+    openSheet(
+      '<div class="sheet-body" style="padding-top:20px">' +
+      '<h3 style="margin:0 0 8px">Import this backup?</h3>' +
+      '<p style="color:var(--text2);font-size:15px;margin:0 0 20px">This will replace your current tasks and categories with the ' + data.tasks.length + " tasks in this file. Note: file attachments are not restored from JSON backups, only their names.</p>" +
+      '<div class="btn-row"><button class="btn ghost" id="cancelImp">Cancel</button><button class="btn" id="confirmImp">Import</button></div>' +
+      "</div>"
+    );
+    document.getElementById("cancelImp").onclick = closeSheet;
+    document.getElementById("confirmImp").onclick = async () => {
+      await idbClear("tasks");
+      await idbClear("categories");
+      for (const c of data.categories) await idbPut("categories", c);
+      for (const t of data.tasks) await idbPut("tasks", Object.assign({ attachments: [] }, t, { attachments: [] }));
+      S.settings.names = data.settings.names || S.settings.names;
+      await saveSettings();
+      await loadAll();
+      closeSheet();
+      navigate("#/today");
+      render();
+      showToast("Backup imported");
+    };
+  };
+  reader.readAsText(file);
+  ev.target.value = "";
+}
+
+/* ---------------- Reminders & daily briefing (foreground-only, honestly) ---------------- */
+function notifyOrToast(title, body) {
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    try { new Notification(title, { body, icon: "icon-192.png" }); return; } catch (e) {}
+  }
+  showToast(title + (body ? " \u2014 " + body : ""));
+}
+
+function checkReminders() {
+  if (!S.settings || !S.settings.notifications.reminders) return;
+  const now = new Date();
+  for (const t of S.tasks) {
+    if (t.status === "completed" || !t.startDate || t.allDay || !t.startTime) continue;
+    const [h, m] = t.startTime.split(":").map(Number);
+    const taskDate = isoToDate(t.startDate);
+    taskDate.setHours(h, m, 0, 0);
+    for (const r of t.reminders) {
+      const fireAt = new Date(taskDate.getTime() - r.minutesBefore * 60000);
+      const key = t.id + ":" + r.minutesBefore;
+      if (!S.notifiedKeys.has(key) && now >= fireAt && now.getTime() - fireAt.getTime() < 5 * 60000) {
+        S.notifiedKeys.add(key);
+        notifyOrToast(t.title, r.minutesBefore === 0 ? "Starting now" : "In " + r.minutesBefore + " minutes");
+      }
+    }
+  }
+}
+
+function checkDailyBriefing() {
+  if (!S.settings || !S.settings.notifications.daily) return;
+  const now = new Date();
+  const today = todayISO();
+  if (S.settings.lastBriefingDate === today) return;
+  if (now.getHours() < 9) return;
+  const tasks = activeTasksForDate(today).filter((t) => t.status !== "completed");
+  let body;
+  if (!tasks.length) {
+    body = "Nothing planned today.";
+  } else {
+    const lines = tasks.slice(0, 4).map((t) => (t.allDay ? "All day" : t.startTime) + " \u2014 " + t.title);
+    body = lines.join("\n") + "\n\n" + tasks.length + (tasks.length === 1 ? " thing today." : " things today.");
+  }
+  notifyOrToast("Good morning " + S.settings.names.sergio + " & " + S.settings.names.rita, body);
+  S.settings.lastBriefingDate = today;
+  saveSettings();
+}
+
+/* ---------------- Init ---------------- */
+let __initStarted = false;
+/* ---------------- One-time seed data ---------------- */
+// Requested fixed monthly income/expenses, added once via the same
+// recurring-task mechanism the Finance composer uses \u2014 "Show on calendar"
+// off, since these were explicitly asked to stay off the Calendar.
+const SEED_FIXED_FINANCES = [
+  { title: "Sal\u00e1rio Sergio", amount: 1050,  flowType: "income" },
+  { title: "Sal\u00e1rio Rita",   amount: 1700,  flowType: "income" },
+  { title: "\u00c1gua",          amount: 30,    flowType: "expense" },
+  { title: "Luz",           amount: 200,   flowType: "expense" },
+  { title: "G\u00e1s",           amount: 30,    flowType: "expense" },
+  { title: "Casa",          amount: 655,   flowType: "expense" },
+  { title: "Condom\u00ednio",    amount: 46.42, flowType: "expense" },
+  { title: "MEO",           amount: 30,    flowType: "expense" },
+  { title: "Nata\u00e7\u00e3o",       amount: 32,    flowType: "expense" },
+  { title: "Combust\u00edvel",   amount: 70,    flowType: "expense" },
+  { title: "Vodafone S",    amount: 35,    flowType: "expense" },
+  { title: "Seg. 2008",     amount: 35,    flowType: "expense" },
+  { title: "Empregada",     amount: 144,   flowType: "expense" },
+];
+window.SEED_FIXED_FINANCES = SEED_FIXED_FINANCES; // exposed for debugging/testing, same as window.S
+async function seedFixedFinancesOnce() {
+  if (S.settings.seededFixedFinances) return;
+  const today = todayISO();
+  for (const item of SEED_FIXED_FINANCES) {
+    const draft = newTaskSkeleton();
+    draft.title = item.title;
+    draft.categoryId = "finance";
+    draft.amount = item.amount;
+    draft.flowType = item.flowType;
+    draft.status = "upcoming";
+    draft.startDate = today;
+    draft.showOnCalendar = false;
+    draft.recurrence = { frequency: "monthly" };
+    await createTaskWithRecurrence(draft);
+  }
+  S.settings.seededFixedFinances = true;
+  await idbPut("settings", S.settings);
+}
+
+async function init() {
+  if (__initStarted) return;
+  __initStarted = true;
+  try {
+    dbInstance = await openDB();
+    let settingsRow = await idbGet("settings", "app");
+    if (!settingsRow) {
+      settingsRow = {
+        key: "app",
+        onboarded: false,
+        names: { sergio: "Sérgio", rita: "Rita" },
+        notifications: { daily: false, reminders: false, permission: "default" },
+        lastBriefingDate: null,
+      };
+      await idbPut("settings", settingsRow);
+    }
+    S.settings = settingsRow;
+
+    await loadAll();
+    if (S.categories.length === 0) {
+      for (const c of DEFAULT_CATEGORIES) await saveCategory(c);
+    }
+    await seedFixedFinancesOnce();
+
+    render();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+
+    setInterval(() => { checkReminders(); checkDailyBriefing(); }, 30000);
+    checkReminders();
+    checkDailyBriefing();
+  } catch (err) {
+    console.error(err);
+    document.getElementById("view").innerHTML =
+      '<div class="onb-wrap"><h1>Together couldn\u2019t start</h1>' +
+      '<p class="tag">' + (err && err.message ? err.message : "Local storage isn\u2019t available in this browser or context.") + '</p>' +
+      '<p class="tag">Try opening this page in a normal browser tab (not a preview or sandbox), using Safari or Chrome directly.</p></div>';
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+</script>
+</body>
+</html>
