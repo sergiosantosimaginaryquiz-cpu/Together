@@ -214,6 +214,7 @@ a{color:inherit; text-decoration:none;}
 .task-main{flex:1; min-width:0;}
 .task-title{font-size:16px; font-weight:560; letter-spacing:-0.01em;}
 .task-title.done{color:var(--text2); text-decoration:line-through; text-decoration-color:var(--grey);}
+.lbl.done{color:var(--text2); text-decoration:line-through; text-decoration-color:var(--grey);}
 .task-meta{
   display:flex; align-items:center; gap:6px;
   margin-top:3px;
@@ -611,6 +612,8 @@ a{color:inherit; text-decoration:none;}
 <symbol id="ic-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
 <symbol id="ic-add-small" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 8.4v7.2M8.4 12h7.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
 <symbol id="ic-wallet" viewBox="0 0 24 24"><path d="M4 7.5a2 2 0 012-2h11a1 1 0 011 1V8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="3" y="7.5" width="18" height="12.5" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="16.2" cy="13.8" r="1.3" fill="currentColor"/></symbol>
+<symbol id="ic-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 002 1.6h7.6a2 2 0 002-1.7L20 8H6.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/></symbol>
+<symbol id="ic-stuff" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
 </defs>
 </svg>
 
@@ -647,7 +650,7 @@ window.addEventListener("unhandledrejection", (e) => showErrorBanner((e.reason &
 
 /* ---------------- IndexedDB layer ---------------- */
 const DB_NAME = "together-db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 let dbInstance = null;
 
 function openDB() {
@@ -671,6 +674,12 @@ function openDB() {
       }
       if (!db.objectStoreNames.contains("balanceSnapshots")) {
         db.createObjectStore("balanceSnapshots", { keyPath: "monthKey" });
+      }
+      if (!db.objectStoreNames.contains("shoppingItems")) {
+        db.createObjectStore("shoppingItems", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("stuffItems")) {
+        db.createObjectStore("stuffItems", { keyPath: "id" });
       }
     };
     req.onsuccess = (e) => resolve(e.target.result);
@@ -845,6 +854,9 @@ const S = {
   calSelected: todayISO(),
   financeMonthAnchor: todayISO(),
   balanceSnapshots: [],
+  shoppingItems: [],
+  stuffItems: [],
+  stuffSearch: "",
   todaySelected: todayISO(),
   tasksFilter: { person: "all", priority: null, category: null, status: null, date: null },
   tasksGroup: "date",
@@ -873,6 +885,8 @@ async function loadAll() {
   S.tasks = await idbGetAll("tasks");
   S.accounts = await idbGetAll("accounts");
   S.balanceSnapshots = await idbGetAll("balanceSnapshots");
+  S.shoppingItems = await idbGetAll("shoppingItems");
+  S.stuffItems = await idbGetAll("stuffItems");
   await migrateCategoriesTracksMoney();
 }
 
@@ -926,6 +940,30 @@ async function saveAccount(acc) {
 async function deleteAccountById(id) {
   await idbDelete("accounts", id);
   S.accounts = S.accounts.filter((a) => a.id !== id);
+}
+
+async function saveShoppingItem(item) {
+  item.updatedAt = Date.now();
+  await idbPut("shoppingItems", item);
+  const idx = S.shoppingItems.findIndex((i) => i.id === item.id);
+  if (idx >= 0) S.shoppingItems[idx] = item; else S.shoppingItems.push(item);
+  return item;
+}
+async function deleteShoppingItemById(id) {
+  await idbDelete("shoppingItems", id);
+  S.shoppingItems = S.shoppingItems.filter((i) => i.id !== id);
+}
+
+async function saveStuffItem(item) {
+  item.updatedAt = Date.now();
+  await idbPut("stuffItems", item);
+  const idx = S.stuffItems.findIndex((i) => i.id === item.id);
+  if (idx >= 0) S.stuffItems[idx] = item; else S.stuffItems.push(item);
+  return item;
+}
+async function deleteStuffItemById(id) {
+  await idbDelete("stuffItems", id);
+  S.stuffItems = S.stuffItems.filter((i) => i.id !== id);
 }
 
 function monthKeyOf(iso) { return iso.slice(0, 7); }
@@ -1177,6 +1215,8 @@ function render() {
   else if (hash.startsWith("#/categories")) { view.innerHTML = renderCategories(); showNav = false; showFab = false; }
   else if (hash.startsWith("#/accounts")) { view.innerHTML = renderAccounts(); showNav = false; showFab = false; }
   else if (hash.startsWith("#/finance")) { view.innerHTML = renderFinanceDashboard(); navActive = "finance"; }
+  else if (hash.startsWith("#/shopping")) { view.innerHTML = renderShopping(); navActive = "more"; }
+  else if (hash.startsWith("#/stuff")) { view.innerHTML = renderStuff(); navActive = "more"; }
   else if (hash.startsWith("#/notifications")) { view.innerHTML = renderNotifications(); showNav = false; showFab = false; }
   else if (hash.startsWith("#/task/new")) { openCreateSheet(); view.innerHTML = renderToday(); navActive = "today"; }
   else if (hash.match(/^#\/task\/([^/]+)\/edit$/)) {
@@ -1205,6 +1245,8 @@ function afterRenderRoute(hash) {
   else if (hash.startsWith("#/categories")) afterCategoriesRender();
   else if (hash.startsWith("#/accounts")) afterAccountsRender();
   else if (hash.startsWith("#/finance")) afterFinanceDashboardRender();
+  else if (hash.startsWith("#/shopping")) afterShoppingRender();
+  else if (hash.startsWith("#/stuff")) afterStuffRender();
   else if (hash.startsWith("#/notifications")) afterNotificationsRender();
   else if (hash.match(/^#\/task\/([^/]+)\/edit$/)) afterTaskEditRender(hash.match(/^#\/task\/([^/]+)\/edit$/)[1]);
   else if (hash.match(/^#\/task\/([^/]+)$/) && !hash.startsWith("#/task/new")) afterTaskDetailRender(hash.match(/^#\/task\/([^/]+)$/)[1]);
@@ -1230,7 +1272,10 @@ function wireGlobalActions() {
     b.onclick = () => navigate(b.getAttribute("data-nav"));
   });
   document.getElementById("fab").onclick = () => {
-    if (currentRoute().startsWith("#/finance")) openFinanceComposer();
+    const route = currentRoute();
+    if (route.startsWith("#/finance")) openFinanceComposer();
+    else if (route.startsWith("#/shopping")) { const el = document.getElementById("shopNewInput"); if (el) el.focus(); }
+    else if (route.startsWith("#/stuff")) openStuffEditor(null);
     else openCreateSheet();
   };
 }
@@ -2518,6 +2563,121 @@ function openAccountEditor(id) {
   };
 }
 
+/* ---------------- SHOPPING ---------------- */
+function renderShopping() {
+  const unchecked = S.shoppingItems.filter((i) => !i.checked).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const checked = S.shoppingItems.filter((i) => i.checked).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const rowHtml = (item) =>
+    '<div class="list-row"><button class="check ' + (item.checked ? "done" : "") + '" data-shop-toggle="' + item.id + '" aria-label="Toggle bought"><svg><use href="#ic-check"/></svg></button>' +
+    '<span class="lbl ' + (item.checked ? "done" : "") + '">' + escapeHtml(item.name) + "</span>" +
+    '<button class="icon-btn" style="width:34px;height:34px" data-shop-del="' + item.id + '"><svg style="width:15px;height:15px"><use href="#ic-trash"/></svg></button>' +
+    "</div>";
+
+  return (
+    '<div class="topbar"><h1>Shopping</h1></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+      '<div style="display:flex;gap:8px;margin-bottom:20px">' +
+        '<input type="text" id="shopNewInput" placeholder="What do you need?" style="flex:1;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:13px 14px;font-size:16px;color:var(--text)">' +
+        '<button class="btn" id="shopAddBtn" style="width:auto;padding:0 20px">Add</button>' +
+      "</div>" +
+      (unchecked.length === 0 && checked.length === 0
+        ? '<div class="empty"><h3>Nothing on the list.</h3><p>Add something above when you think of it.</p></div>'
+        : "") +
+      (unchecked.length ? '<div class="section-label">TO BUY</div><div class="card">' + unchecked.map(rowHtml).join("") + "</div>" : "") +
+      (checked.length ? '<div class="section-label">BOUGHT</div><div class="card">' + checked.map(rowHtml).join("") + '</div><button class="link-btn" id="shopClearBought" style="margin-top:8px">Clear bought</button>' : "") +
+    "</div>"
+  );
+}
+function afterShoppingRender() {
+  const addFn = async () => {
+    const el = document.getElementById("shopNewInput");
+    const val = el.value.trim();
+    if (!val) return;
+    await saveShoppingItem({ id: uid(), name: val, checked: false, createdAt: Date.now() });
+    render();
+  };
+  document.getElementById("shopAddBtn").onclick = addFn;
+  document.getElementById("shopNewInput").addEventListener("keydown", (e) => { if (e.key === "Enter") addFn(); });
+  document.querySelectorAll("[data-shop-toggle]").forEach((el) => el.onclick = async () => {
+    const item = S.shoppingItems.find((i) => i.id === el.getAttribute("data-shop-toggle"));
+    item.checked = !item.checked;
+    await saveShoppingItem(item);
+    render();
+  });
+  document.querySelectorAll("[data-shop-del]").forEach((el) => el.onclick = async () => {
+    await deleteShoppingItemById(el.getAttribute("data-shop-del"));
+    render();
+  });
+  const clearBtn = document.getElementById("shopClearBought");
+  if (clearBtn) clearBtn.onclick = async () => {
+    const boughtIds = S.shoppingItems.filter((i) => i.checked).map((i) => i.id);
+    for (const id of boughtIds) await deleteShoppingItemById(id);
+    render();
+    showToast("Cleared " + boughtIds.length + " item" + (boughtIds.length === 1 ? "" : "s"));
+  };
+  setTimeout(() => { const el = document.getElementById("shopNewInput"); if (el) el.focus(); }, 150);
+}
+
+/* ---------------- STUFF ---------------- */
+function renderStuff() {
+  const q = S.stuffSearch.toLowerCase();
+  const items = S.stuffItems
+    .filter((i) => !q || i.title.toLowerCase().includes(q) || (i.content || "").toLowerCase().includes(q))
+    .sort((a, b) => a.title.localeCompare(b.title));
+  const rowHtml = (item) =>
+    '<div class="list-row" data-stuff-open="' + item.id + '" style="cursor:pointer;align-items:flex-start">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div class="lbl" style="font-weight:650">' + escapeHtml(item.title) + "</div>" +
+        '<div style="color:var(--text2);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml((item.content || "").split("\n")[0]) + "</div>" +
+      "</div>" +
+      '<svg style="width:16px;height:16px;color:var(--text2);flex:0 0 auto;margin-top:2px"><use href="#ic-chevron"/></svg>' +
+    "</div>";
+
+  return (
+    '<div class="topbar"><h1>Stuff</h1></div>' +
+    '<div style="padding:0 var(--sp-lg)">' +
+      '<input type="search" id="stuffSearchInput" placeholder="Search" value="' + escapeHtml(S.stuffSearch) + '" style="width:100%;margin-bottom:16px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:13px 14px;font-size:16px;color:var(--text)">' +
+      (items.length === 0
+        ? '<div class="empty"><h3>' + (S.stuffSearch ? "Nothing found." : "Nothing saved yet.") + "</h3><p>" + (S.stuffSearch ? "Try a different search." : "Add things you look up often \u2014 Wi-Fi passwords, sizes, policy numbers.") + "</p></div>"
+        : '<div class="card">' + items.map(rowHtml).join("") + "</div>") +
+    "</div>"
+  );
+}
+function afterStuffRender() {
+  document.getElementById("stuffSearchInput").oninput = (e) => { S.stuffSearch = e.target.value; render(); };
+  document.querySelectorAll("[data-stuff-open]").forEach((el) => el.onclick = () => openStuffEditor(el.getAttribute("data-stuff-open")));
+}
+function openStuffEditor(id) {
+  const existing = id ? S.stuffItems.find((i) => i.id === id) : { id: null, title: "", content: "" };
+  openSheet(
+    '<div class="sheet-head"><span class="title">' + (id ? "Edit" : "New") + '</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<input class="title-input" id="stuffTitle" placeholder="Title" value="' + escapeHtml(existing.title) + '">' +
+      '<div class="field"><label>DETAILS</label><textarea id="stuffContent" style="min-height:140px">' + escapeHtml(existing.content) + "</textarea></div>" +
+      '<button class="btn" id="stuffSaveBtn">Save</button>' +
+      (id ? '<button class="btn ghost" id="stuffDeleteBtn" style="margin-top:8px">Delete</button>' : "") +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = closeSheet;
+  document.getElementById("stuffSaveBtn").onclick = async () => {
+    const title = document.getElementById("stuffTitle").value.trim();
+    if (!title) { showToast("Give it a title."); return; }
+    const content = document.getElementById("stuffContent").value;
+    await saveStuffItem({ id: existing.id || uid(), title, content, createdAt: existing.createdAt || Date.now() });
+    closeSheet();
+    render();
+  };
+  if (id) {
+    document.getElementById("stuffDeleteBtn").onclick = async () => {
+      await deleteStuffItemById(id);
+      closeSheet();
+      render();
+      showToast("Deleted");
+    };
+  }
+  setTimeout(() => { const el = document.getElementById("stuffTitle"); if (el) el.focus(); }, 150);
+}
+
 /* ---------------- FINANCE DASHBOARD ---------------- */
 function renderFinanceDashboard() {
   const anchor = S.financeMonthAnchor;
@@ -2825,6 +2985,11 @@ function renderMore() {
     '<div class="section-label">MONEY</div>' +
     '<div class="card">' +
       '<div class="list-row" data-nav="#/accounts" style="cursor:pointer"><span class="lbl">Accounts</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
+    "</div>" +
+    '<div class="section-label">LISTS</div>' +
+    '<div class="card">' +
+      '<div class="list-row" data-nav="#/shopping" style="cursor:pointer"><span class="lbl">Shopping</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
+      '<div class="list-row" data-nav="#/stuff" style="cursor:pointer"><span class="lbl">Stuff</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
     "</div>" +
     '<div class="section-label">ORGANIZE</div>' +
     '<div class="card">' +
