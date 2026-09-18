@@ -185,26 +185,18 @@ a{color:inherit; text-decoration:none;}
 /* ---------- Task rows ---------- */
 .task-row{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   gap:var(--sp-md);
-  padding:14px 4px;
+  padding:13px 4px;
   border-bottom:1px solid var(--line);
 }
 .task-row:last-child{border-bottom:none;}
-.task-time{
-  width:52px;
-  flex:0 0 52px;
-  font-size:14px;
-  font-weight:600;
-  color:var(--text2);
-  line-height:1.3;
-}
-.task-time .end{display:block; font-weight:400; font-size:12px; opacity:.8;}
 .check{
   width:24px; height:24px;
   border-radius:50%;
   border:1.6px solid var(--grey);
   flex:0 0 24px;
+  margin-top:2px;
   display:flex; align-items:center; justify-content:center;
   background:#fff;
 }
@@ -212,15 +204,23 @@ a{color:inherit; text-decoration:none;}
 .check svg{width:13px; height:13px; opacity:0; color:#fff;}
 .check.done svg{opacity:1;}
 .task-main{flex:1; min-width:0;}
-.task-title{font-size:16px; font-weight:560; letter-spacing:-0.01em;}
+.task-row-top{display:flex; align-items:baseline; gap:8px;}
+.task-title{
+  flex:1; min-width:0;
+  font-size:16px; font-weight:560; letter-spacing:-0.01em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
 .task-title.done{color:var(--text2); text-decoration:line-through; text-decoration-color:var(--grey);}
 .lbl.done{color:var(--text2); text-decoration:line-through; text-decoration-color:var(--grey);}
 .task-meta{
-  display:flex; align-items:center; gap:6px;
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
   margin-top:3px;
-  font-size:13px;
+  font-size:12.5px;
   color:var(--text2);
+  line-height:1.5;
 }
+.task-meta-when{flex:0 0 auto;}
+.task-meta-cat{white-space:nowrap;}
 .dot{width:6px; height:6px; border-radius:50%; flex:0 0 6px;}
 .dot.olive{background:var(--olive);}
 .dot.brown{background:var(--brown);}
@@ -234,6 +234,7 @@ a{color:inherit; text-decoration:none;}
 .pflag.normal{background:var(--grey);}
 .pflag.low{background:transparent; border:1.4px solid var(--grey);}
 .assignee{
+  margin-left:auto;
   font-size:12px; font-weight:650;
   color:var(--text2);
   background:var(--fill);
@@ -561,6 +562,14 @@ a{color:inherit; text-decoration:none;}
 .list-row:last-child{border-bottom:none;}
 .list-row .lbl{flex:1; font-size:16px;}
 .list-row .val{color:var(--text2); font-size:15px;}
+.shop-row{
+  display:flex; align-items:center; gap:12px;
+  padding:9px 4px;
+  border-bottom:1px solid var(--line);
+}
+.shop-row:last-child{border-bottom:none;}
+.shop-row .check{margin-top:0;}
+.shop-row .lbl{flex:1; font-size:15.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .toggle{
   width:48px; height:29px; border-radius:20px; background:var(--grey);
   position:relative; border:none; flex:0 0 48px;
@@ -1292,25 +1301,27 @@ function taskRowHtml(t) {
   const cat = catById(t.categoryId);
   const done = t.status === "completed";
   const time = t.allDay ? "All day" : (t.startTime || "");
-  const endTime = (!t.allDay && t.endTime) ? '<span class="end">' + t.endTime + "</span>" : "";
+  const endTime = (!t.allDay && t.endTime) ? " \u2013 " + t.endTime : "";
   const amountHtml = (t.amount != null) ?
     '<span class="row-amount ' + (t.flowType === "income" ? "income" : "expense") + '">' +
       (t.flowType === "income" ? fmtMoneySigned(t.amount) : "\u2212" + fmtMoney(t.amount)) +
     "</span>" : "";
   return (
     '<div class="task-row" data-task-row="' + t.id + '">' +
-      '<div class="task-time">' + escapeHtml(time) + endTime + "</div>" +
       '<button class="check ' + (done ? "done" : "") + '" data-toggle-complete="' + t.id + '" aria-label="Complete task">' +
         '<svg><use href="#ic-check"/></svg></button>' +
       '<div class="task-main" data-open-task="' + t.id + '">' +
-        '<div class="task-title ' + (done ? "done" : "") + '">' + escapeHtml(t.title) + "</div>" +
+        '<div class="task-row-top">' +
+          '<span class="task-title ' + (done ? "done" : "") + '">' + escapeHtml(t.title) + "</span>" +
+          amountHtml +
+        "</div>" +
         '<div class="task-meta">' +
-          '<span class="dot ' + cat.color + '"></span><span>' + escapeHtml(cat.name) + "</span>" +
+          '<span class="task-meta-when">' + escapeHtml(time) + escapeHtml(endTime) + "</span>" +
+          '<span class="dot ' + cat.color + '"></span><span class="task-meta-cat">' + escapeHtml(cat.name) + "</span>" +
           '<span class="pflag ' + t.priority + '"></span>' +
+          '<span class="assignee">' + escapeHtml(personShort(t.assignedTo)) + "</span>" +
         "</div>" +
       "</div>" +
-      amountHtml +
-      '<span class="assignee">' + escapeHtml(personShort(t.assignedTo)) + "</span>" +
     "</div>"
   );
 }
@@ -2575,9 +2586,9 @@ function renderShopping() {
   const unchecked = S.shoppingItems.filter((i) => !i.checked).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   const checked = S.shoppingItems.filter((i) => i.checked).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   const rowHtml = (item) =>
-    '<div class="list-row"><button class="check ' + (item.checked ? "done" : "") + '" data-shop-toggle="' + item.id + '" aria-label="Toggle bought"><svg><use href="#ic-check"/></svg></button>' +
+    '<div class="shop-row"><button class="check ' + (item.checked ? "done" : "") + '" data-shop-toggle="' + item.id + '" aria-label="Toggle bought"><svg><use href="#ic-check"/></svg></button>' +
     '<span class="lbl ' + (item.checked ? "done" : "") + '">' + escapeHtml(item.name) + "</span>" +
-    '<button class="icon-btn" style="width:34px;height:34px" data-shop-del="' + item.id + '"><svg style="width:15px;height:15px"><use href="#ic-trash"/></svg></button>' +
+    '<button class="icon-btn" style="width:28px;height:28px;box-shadow:none;background:none" data-shop-del="' + item.id + '"><svg style="width:15px;height:15px"><use href="#ic-trash"/></svg></button>' +
     "</div>";
 
   return (
