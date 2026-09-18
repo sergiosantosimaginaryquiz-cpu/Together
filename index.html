@@ -3195,6 +3195,36 @@ async function seedFixedFinancesOnce() {
   await idbPut("settings", S.settings);
 }
 
+const SEED_STUFF_ITEMS = [
+  { title: "PUK \u2014 S\u00e9rgio", content: "74875919" },
+  { title: "PIN Telem\u00f3vel \u2014 S\u00e9rgio", content: "7698" },
+  { title: "Cart\u00e3o D\u00e9bito BPI \u2014 S\u00e9rgio", content: "\u00daltimos d\u00edgitos: 0285" },
+  { title: "Cart\u00e3o Conta Conjunta \u2014 Rita", content: "N: 9596\nC: 7484" },
+  { title: "BPI Empresa", content: "SS522006\nLVZDPFTMOJ / sergiosantos984" },
+  { title: "Cart\u00e3o D\u00e9bito IQ \u2014 Rita", content: "Password: 7115" },
+  { title: "Cart\u00e3o D\u00e9bito IQ \u2014 S\u00e9rgio", content: "Password: 7808" },
+  { title: "Cart\u00e3o de Cr\u00e9dito IQ", content: "Password: 1548" },
+  { title: "Cart\u00e3o Caixa", content: "Password: 5898" },
+  { title: "NIF Empresa", content: "518243516" },
+  { title: "Portal ETicket", content: "Email: sergiosantos984@gmail.com\nPassword: Pupilos52" },
+  { title: "Ticket Refei\u00e7\u00e3o \u2014 S\u00e9rgio", content: "Password: 6187" },
+  { title: "Cart\u00e3o Refei\u00e7\u00e3o \u2014 Rita", content: "Password: 5846" },
+  { title: "NIF \u2014 S\u00e9rgio", content: "245219609" },
+  { title: "Cart\u00e3o Cr\u00e9dito IQ (3000\u20ac)", content: "Password: 3903" },
+  { title: "Edenred", content: "Password: 4594" },
+  { title: "Via Verde", content: "Email: sergiosantos984@gmail.com\nPassword: Pupilos5206" },
+  { title: "Morada de Casa", content: "Rua Dr Jo\u00e3o Barata n\u00ba87 - 1\u00ba Esq\n2870-497 Montijo" },
+];
+window.SEED_STUFF_ITEMS = SEED_STUFF_ITEMS;
+async function seedStuffItemsOnce() {
+  if (S.settings.seededStuffItems) return;
+  for (const item of SEED_STUFF_ITEMS) {
+    await saveStuffItem({ id: uid(), title: item.title, content: item.content, createdAt: Date.now() });
+  }
+  S.settings.seededStuffItems = true;
+  await idbPut("settings", S.settings);
+}
+
 async function init() {
   if (__initStarted) return;
   __initStarted = true;
@@ -3218,6 +3248,7 @@ async function init() {
       for (const c of DEFAULT_CATEGORIES) await saveCategory(c);
     }
     await seedFixedFinancesOnce();
+    await seedStuffItemsOnce();
 
     render();
 
