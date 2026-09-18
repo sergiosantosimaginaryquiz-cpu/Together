@@ -114,7 +114,7 @@ a{color:inherit; text-decoration:none;}
 
 /* ---------- View container ---------- */
 #view{
-  padding: 0 var(--sp-lg) calc(var(--nav-h) + var(--safe-b) + 32px);
+  padding: 0 0 calc(var(--nav-h) + var(--safe-b) + 32px);
   min-height:60vh;
 }
 .view-plain{padding-bottom: calc(var(--sp-xl));}
@@ -291,14 +291,16 @@ a{color:inherit; text-decoration:none;}
 }
 .nav-item{
   flex:1;
+  min-width:0;
   border:none; background:none;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:3px;
   color:var(--text2);
-  font-size:11px;
+  font-size:10.5px;
   font-weight:600;
+  white-space:nowrap;
 }
-.nav-item svg{width:23px; height:23px;}
+.nav-item svg{width:22px; height:22px; flex:0 0 auto;}
 .nav-item.active{color:var(--text);}
 .fab{
   position:fixed;
@@ -1026,7 +1028,7 @@ function newTaskSkeleton() {
 /* ---------------- Query helpers ---------------- */
 function activeTasksForDate(iso) {
   return S.tasks
-    .filter((t) => t.startDate === iso)
+    .filter((t) => t.startDate === iso && t.showOnCalendar !== false)
     .sort((a, b) => {
       if (a.allDay && !b.allDay) return -1;
       if (!a.allDay && b.allDay) return 1;
@@ -1063,6 +1065,10 @@ function monthMatrix(anchorIso) {
 
 function taskMatchesFilter(t) {
   const f = S.tasksFilter;
+  // Finance-tracked items are hidden from the general Tasks list by default —
+  // they live on the Finance Dashboard instead — unless the person is
+  // specifically filtering by that category or searching for it by name.
+  if (t.showOnCalendar === false && !(f.category && f.category.includes(t.categoryId)) && !S.tasksSearch) return false;
   if (f.person && f.person !== "all") {
     if (f.person === "both") { if (t.assignedTo !== "both") return false; }
     else if (t.assignedTo !== f.person && t.assignedTo !== "both") return false;
@@ -1215,8 +1221,8 @@ function render() {
   else if (hash.startsWith("#/categories")) { view.innerHTML = renderCategories(); showNav = false; showFab = false; }
   else if (hash.startsWith("#/accounts")) { view.innerHTML = renderAccounts(); showNav = false; showFab = false; }
   else if (hash.startsWith("#/finance")) { view.innerHTML = renderFinanceDashboard(); navActive = "finance"; }
-  else if (hash.startsWith("#/shopping")) { view.innerHTML = renderShopping(); navActive = "more"; }
-  else if (hash.startsWith("#/stuff")) { view.innerHTML = renderStuff(); navActive = "more"; }
+  else if (hash.startsWith("#/shopping")) { view.innerHTML = renderShopping(); navActive = "shopping"; }
+  else if (hash.startsWith("#/stuff")) { view.innerHTML = renderStuff(); navActive = "stuff"; }
   else if (hash.startsWith("#/notifications")) { view.innerHTML = renderNotifications(); showNav = false; showFab = false; }
   else if (hash.startsWith("#/task/new")) { openCreateSheet(); view.innerHTML = renderToday(); navActive = "today"; }
   else if (hash.match(/^#\/task\/([^/]+)\/edit$/)) {
@@ -1256,9 +1262,10 @@ function afterRenderRoute(hash) {
 function buildBottomNav(active) {
   const items = [
     { key: "today", route: "#/today", icon: "ic-today", label: "Today" },
-    { key: "tasks", route: "#/tasks", icon: "ic-tasks", label: "Tasks" },
     { key: "calendar", route: "#/calendar", icon: "ic-calendar", label: "Calendar" },
     { key: "finance", route: "#/finance", icon: "ic-wallet", label: "Finance" },
+    { key: "shopping", route: "#/shopping", icon: "ic-cart", label: "Shopping" },
+    { key: "stuff", route: "#/stuff", icon: "ic-stuff", label: "Stuff" },
     { key: "more", route: "#/more", icon: "ic-more", label: "More" },
   ];
   document.getElementById("bottomNav").innerHTML = items.map((it) =>
@@ -1618,7 +1625,7 @@ function renderCalendar() {
 }
 
 function renderDaySchedule(iso) {
-  const tasks = activeTasksForDate(iso).filter((t) => t.showOnCalendar !== false);
+  const tasks = activeTasksForDate(iso);
   const heading = fmtDateHeading(iso);
   let body;
   if (!tasks.length) {
@@ -2135,7 +2142,7 @@ function renderTaskEditFullscreen(id) {
         '<button class="chip ' + (t.flowType === "income" ? "active" : "") + '" data-e-flow="income">Income</button>' +
       "</div>" +
       '<input type="number" inputmode="decimal" step="0.01" min="0" id="e-amount" placeholder="0.00" value="' + (t.amount != null ? t.amount : "") + '">' +
-      '<label class="check-label" style="margin-top:10px"><input type="checkbox" id="e-showCal" ' + (t.showOnCalendar !== false ? "checked" : "") + '> Show on calendar</label>' +
+      '<label class="check-label" style="margin-top:10px"><input type="checkbox" id="e-showCal" ' + (t.showOnCalendar !== false ? "checked" : "") + '> Also show in Today, Tasks \u0026 Calendar</label>' +
     "</div>";
 
   return (
@@ -2900,7 +2907,7 @@ function openFinanceComposer() {
         '<div class="field"><label>ASSIGNED TO</label><div class="chip-row">' + personChips + "</div></div>" +
         '<div class="field"><label>REPEATS</label><div class="chip-row">' + recChips + "</div></div>" +
         '<div class="field"><label class="check-label"><input type="checkbox" id="finPaid" ' + (markPaid ? "checked" : "") + '> ' + (draft.flowType === "income" ? "Already received" : "Already paid") + "</label></div>" +
-        '<div class="field"><label class="check-label"><input type="checkbox" id="finShowCal" ' + (draft.showOnCalendar ? "checked" : "") + '> Show on calendar</label></div>' +
+        '<div class="field"><label class="check-label"><input type="checkbox" id="finShowCal" ' + (draft.showOnCalendar ? "checked" : "") + '> Also show in Today, Tasks \u0026 Calendar</label></div>' +
         '<button class="btn" id="finSave">Add ' + (draft.flowType === "income" ? "Income" : "Expense") + "</button>" +
       "</div>"
     );
@@ -2986,15 +2993,11 @@ function renderMore() {
     '<div class="card">' +
       '<div class="list-row" data-nav="#/accounts" style="cursor:pointer"><span class="lbl">Accounts</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
     "</div>" +
-    '<div class="section-label">LISTS</div>' +
-    '<div class="card">' +
-      '<div class="list-row" data-nav="#/shopping" style="cursor:pointer"><span class="lbl">Shopping</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
-      '<div class="list-row" data-nav="#/stuff" style="cursor:pointer"><span class="lbl">Stuff</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
-    "</div>" +
     '<div class="section-label">ORGANIZE</div>' +
     '<div class="card">' +
       '<div class="list-row" data-nav="#/categories" style="cursor:pointer"><span class="lbl">Categories</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
       '<div class="list-row" data-nav="#/notifications" style="cursor:pointer"><span class="lbl">Notifications</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
+      '<div class="list-row" data-nav="#/tasks" style="cursor:pointer"><span class="lbl">All Tasks</span><svg style="width:18px;height:18px;color:var(--text2)"><use href="#ic-chevron"/></svg></div>' +
     "</div>" +
     '<div class="section-label">DATA</div>' +
     '<div class="card">' +
