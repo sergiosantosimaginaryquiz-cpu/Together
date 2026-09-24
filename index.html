@@ -59,6 +59,25 @@
   --safe-t:env(safe-area-inset-top, 0px);
 }
 
+:root[data-theme="dark"]{
+  --bg:#000000;
+  --surface:#1D1D1F;
+  --surface-2:#242426;
+  --fill:#2C2C2E;
+  --text:#FFFFFF;
+  --text2:#98989D;
+  --text3:#6E6E73;
+  --line:rgba(255,255,255,.14);
+  --accent:#007AFF;
+
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.4);
+  --shadow-lg:0 4px 8px rgba(0,0,0,.5), 0 16px 40px rgba(0,0,0,.5);
+  --shadow:var(--shadow-md);
+}
+:root[data-theme="dark"] .check{background:var(--surface-2);}
+:root[data-theme="dark"] .onb-logo{box-shadow:none;}
+
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
 body{
@@ -999,6 +1018,12 @@ async function deleteCategoryById(id) {
 
 async function saveSettings() {
   await idbPut("settings", Object.assign({ key: "app" }, S.settings));
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#000000" : "#F5F5F7");
 }
 
 function newTaskSkeleton() {
@@ -2424,7 +2449,10 @@ function computeFinanceSnapshot(monthAnchorIso) {
   const hasAccounts = S.accounts.length > 0 || S.balanceSnapshots.length > 0; // "do we have any baseline at all"
 
   const snapshotThisMonth = getSnapshot(monthKey);
-  const needsCheckIn = isCurrentRealMonth && !snapshotThisMonth;
+  // Ask for every month you land on \u2014 not just the real current one \u2014 since
+  // the dashboard now defaults to next month and each month needs its own
+  // starting balance regardless of which one happens to be "today".
+  const needsCheckIn = !snapshotThisMonth;
 
   const balanceAtMonthStart = balanceAtStartOfMonth(monthAnchorIso);
 
@@ -3009,8 +3037,10 @@ function renderMore() {
       '<input type="file" id="importInput" accept="application/json" style="display:none">' +
     "</div>" +
     '<div class="section-label">APPEARANCE</div>' +
-    '<div class="card"><div class="list-row"><span class="lbl">Light mode</span><span class="val">On</span></div>' +
-    '<div class="list-row"><span class="lbl">Dark mode</span><span class="val">Coming later</span></div></div>' +
+    '<div class="segment" style="margin-bottom:8px">' +
+      '<button class="' + (S.settings.theme !== "dark" ? "active" : "") + '" id="themeLightBtn">Light</button>' +
+      '<button class="' + (S.settings.theme === "dark" ? "active" : "") + '" id="themeDarkBtn">Dark</button>' +
+    "</div>" +
     '<div class="section-label">ABOUT</div>' +
     '<div class="card"><div class="list-row"><span class="lbl">Together</span><span class="val">Version 1.0</span></div></div>' +
     "</div>"
@@ -3037,6 +3067,22 @@ function afterMoreRender() {
   };
   document.getElementById("exportBtn").onclick = exportData;
   document.getElementById("importInput").onchange = importData;
+  document.getElementById("themeLightBtn").onclick = async () => {
+    if (S.settings.theme === "dark") {
+      S.settings.theme = "light";
+      applyTheme("light");
+      await saveSettings();
+      render();
+    }
+  };
+  document.getElementById("themeDarkBtn").onclick = async () => {
+    if (S.settings.theme !== "dark") {
+      S.settings.theme = "dark";
+      applyTheme("dark");
+      await saveSettings();
+      render();
+    }
+  };
 }
 
 /* ---------------- EXPORT / IMPORT ---------------- */
@@ -3230,10 +3276,13 @@ async function init() {
         names: { sergio: "Sérgio", rita: "Rita" },
         notifications: { daily: false, reminders: false, permission: "default" },
         lastBriefingDate: null,
+        theme: "light",
       };
       await idbPut("settings", settingsRow);
     }
+    if (!settingsRow.theme) settingsRow.theme = "light"; // migrate existing installs
     S.settings = settingsRow;
+    applyTheme(S.settings.theme);
 
     await loadAll();
     if (S.categories.length === 0) {
