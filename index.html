@@ -861,9 +861,9 @@ const S = {
   tasks: [],
   accounts: [],
   route: "#/today",
-  calMonthAnchor: todayISO(),
-  calSelected: todayISO(),
-  financeMonthAnchor: todayISO(),
+  calMonthAnchor: addMonthsISO(todayISO(), 1),
+  calSelected: addMonthsISO(todayISO(), 1),
+  financeMonthAnchor: addMonthsISO(todayISO(), 1),
   balanceSnapshots: [],
   shoppingItems: [],
   stuffItems: [],
@@ -2775,14 +2775,6 @@ function renderFinanceDashboard() {
       ? '<div class="fin-big" style="margin:4px 0">' + fmtMoney(snap.safeToSpend) + "</div><p style=\"color:var(--text2);margin:0\">After remaining commitments this month" + (snap.currentMonthRemaining ? " (" + fmtMoney(snap.currentMonthRemaining) + " left to pay)" : "") + "</p>"
       : '<p style="color:var(--text2);margin:4px 0 0">Enter this month\u2019s starting balance to see what\u2019s safe to spend.</p>') +
   "</div>";
-
-  html += '<div class="section-label">NEEDS ATTENTION</div>';
-  if (snap.needsAttention.length === 0) {
-    html += '<div class="card"><p style="color:var(--text2);margin:0">Nothing needs attention right now.</p></div>';
-  } else {
-    html += '<p style="color:var(--text2);font-size:13px;margin:-4px 0 8px">' + snap.needsAttention.length + " item" + (snap.needsAttention.length === 1 ? "" : "s") + " need review</p>" +
-      '<div class="card">' + snap.needsAttention.map(taskRowHtml).join("") + "</div>";
-  }
 
   html += '<div class="section-label">' + monthLong(anchor).toUpperCase() + " CHECKLIST</div>";
   if (snap.checklist.length === 0) {
