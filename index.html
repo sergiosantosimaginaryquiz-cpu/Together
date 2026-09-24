@@ -1663,7 +1663,11 @@ function getGoogleTokenClient() {
         }
         render();
       },
-      error_callback: () => { showToast("Google Calendar connection was cancelled or failed."); },
+      error_callback: (err) => {
+        const code = err && (err.type || err.message || err.error) ? (err.type || err.message || err.error) : "unknown";
+        console.error("Google OAuth error:", err);
+        showErrorBanner("Google Calendar connection failed (" + code + "). See details below.");
+      },
     });
     googleTokenClient.__forClientId = S.settings.googleClientId;
   }
