@@ -3306,10 +3306,14 @@ function afterMoreRender() {
   }
   const gcalConnectBtn = document.getElementById("gcalConnect");
   if (gcalConnectBtn) {
-    gcalConnectBtn.onclick = async () => {
+    gcalConnectBtn.onclick = () => {
       if (!S.settings.googleClientId) { showToast("Paste your Google Client ID first."); return; }
-      await saveSettings();
+      // Must call requestAccessToken() synchronously, in the same tick as the
+      // click \u2014 any await before it and mobile browsers block the popup as
+      // "not a direct user gesture" (this is exactly what "popup_failed_to_open"
+      // was). Persist the setting separately, without blocking the popup call.
       connectGoogleCalendar();
+      saveSettings();
     };
   }
   const gcalSyncBtn = document.getElementById("gcalSyncNow");
