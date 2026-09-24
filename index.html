@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="icon-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <meta name="apple-mobile-web-app-title" content="Together" />
 <style>
 :root{
@@ -261,6 +262,18 @@ a{color:inherit; text-decoration:none;}
   padding:2px 8px;
   flex:0 0 auto;
 }
+.google-badge{
+  margin-left:auto;
+  font-size:11px; font-weight:650;
+  color:var(--accent);
+  background:none;
+  border:1px solid var(--accent);
+  border-radius:20px;
+  padding:1px 8px;
+  flex:0 0 auto;
+}
+.google-event-row{cursor:pointer;}
+.google-event-row .task-title{color:var(--text2);}
 .row-amount{
   font-size:13px; font-weight:700;
   flex:0 0 auto;
@@ -887,6 +900,7 @@ const S = {
   shoppingItems: [],
   stuffItems: [],
   stuffSearch: "",
+  googleEvents: [], // external, read-only, never persisted \u2014 refetched each session
   todaySelected: todayISO(),
   tasksFilter: { person: "all", priority: null, category: null, status: null, date: null },
   tasksGroup: "date",
@@ -1424,6 +1438,7 @@ function renderToday() {
   const iso = S.todaySelected;
   const isToday = iso === todayISO();
   const tasks = activeTasksForDate(iso);
+  const gEvents = googleEventsForDate(iso);
   const activeCount = tasks.filter((t) => t.status !== "completed").length;
   const heading = fmtDateHeading(iso);
 
@@ -1439,10 +1454,14 @@ function renderToday() {
   weekStrip += "</div>";
 
   let body = "";
-  if (tasks.length === 0) {
+  if (tasks.length === 0 && gEvents.length === 0) {
     body = '<div class="empty"><h3>Nothing planned' + (isToday ? " today" : "") + ".</h3><p>Enjoy the quiet.</p></div>";
   } else {
-    body = '<div class="card">' + tasks.map(taskRowHtml).join("") + "</div>";
+    body = tasks.length ? '<div class="card">' + tasks.map(taskRowHtml).join("") + "</div>" : "";
+    if (gEvents.length) {
+      body += '<div class="section-label" style="margin-top:' + (tasks.length ? "var(--sp-lg)" : "var(--sp-sm)") + '">FROM GOOGLE CALENDAR</div>' +
+        '<div class="card">' + gEvents.map(googleEventRowHtml).join("") + "</div>";
+    }
   }
 
   const upcoming = upcomingPreview();
@@ -1474,6 +1493,7 @@ function afterTodayRender() {
     el.onclick = () => { S.calSelected = el.getAttribute("data-open-day"); S.calMonthAnchor = S.calSelected; navigate("#/calendar"); };
   });
   wireTaskRows(view);
+  wireGoogleEventRows(view);
 }
 
 /* ---------------- TASKS ---------------- */
@@ -1609,6 +1629,161 @@ function openGroupSortSheet() {
   document.querySelectorAll("[data-sort]").forEach((el) => el.onclick = () => { S.tasksSort = el.getAttribute("data-sort"); openGroupSortSheet(); });
 }
 
+/* ---------------- GOOGLE CALENDAR (read-only, client-only OAuth) ----------------
+ * Uses Google Identity Services' token-client model \u2014 no backend. The access
+ * token lives only in memory (never persisted) and typically lasts ~1 hour;
+ * we attempt a silent (no-popup) refresh on load and whenever it's stale, and
+ * only fall back to an explicit user click if that silent attempt fails.
+ * Events are fetched fresh each session, never written to IndexedDB, and are
+ * strictly read-only in this app \u2014 Together never modifies Google Calendar.
+ * ------------------------------------------------------------------------- */
+let googleAccessToken = null;
+let googleTokenExpiresAt = 0;
+let googleTokenClient = null;
+let googleFetchInFlight = false;
+
+function googleClientReady() {
+  return typeof google !== "undefined" && google.accounts && google.accounts.oauth2;
+}
+function getGoogleTokenClient() {
+  if (!S.settings.googleClientId || !googleClientReady()) return null;
+  if (!googleTokenClient || googleTokenClient.__forClientId !== S.settings.googleClientId) {
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: S.settings.googleClientId,
+      scope: "https://www.googleapis.com/auth/calendar.readonly",
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          googleAccessToken = tokenResponse.access_token;
+          googleTokenExpiresAt = Date.now() + (Number(tokenResponse.expires_in || 3600) * 1000);
+          S.settings.googleCalendarConnected = true;
+          await saveSettings();
+          await fetchGoogleCalendarEvents();
+        } else {
+          showToast("Couldn\u2019t connect to Google Calendar.");
+        }
+        render();
+      },
+      error_callback: () => { showToast("Google Calendar connection was cancelled or failed."); },
+    });
+    googleTokenClient.__forClientId = S.settings.googleClientId;
+  }
+  return googleTokenClient;
+}
+
+function connectGoogleCalendar() {
+  const client = getGoogleTokenClient();
+  if (!client) { showToast("Enter your Google Client ID above first."); return; }
+  client.requestAccessToken({ prompt: "consent" });
+}
+
+async function attemptSilentGoogleReconnect() {
+  if (!S.settings.googleClientId || !S.settings.googleCalendarConnected) return;
+  const client = getGoogleTokenClient();
+  if (!client) return;
+  try { client.requestAccessToken({ prompt: "" }); } catch (e) { /* ignore \u2014 user can reconnect manually */ }
+}
+
+async function disconnectGoogleCalendar() {
+  if (googleAccessToken && googleClientReady()) {
+    try { google.accounts.oauth2.revoke(googleAccessToken, () => {}); } catch (e) {}
+  }
+  googleAccessToken = null;
+  googleTokenExpiresAt = 0;
+  S.googleEvents = [];
+  S.settings.googleCalendarConnected = false;
+  await saveSettings();
+  render();
+}
+
+function normalizeGoogleEvent(item) {
+  const allDay = !!(item.start && item.start.date);
+  const startDate = allDay ? item.start.date : (item.start && item.start.dateTime ? item.start.dateTime.slice(0, 10) : null);
+  const startTime = allDay ? null : (item.start && item.start.dateTime ? item.start.dateTime.slice(11, 16) : null);
+  const endTime = allDay ? null : (item.end && item.end.dateTime ? item.end.dateTime.slice(11, 16) : null);
+  return {
+    id: "g_" + item.id,
+    title: item.summary || "(untitled)",
+    startDate,
+    startTime,
+    endTime,
+    allDay,
+    location: item.location || "",
+    htmlLink: item.htmlLink || "",
+  };
+}
+
+async function fetchGoogleCalendarEvents() {
+  if (!googleAccessToken || googleFetchInFlight) return false;
+  googleFetchInFlight = true;
+  try {
+    const timeMin = addDaysISO(todayISO(), -14) + "T00:00:00Z";
+    const timeMax = addDaysISO(todayISO(), 120) + "T00:00:00Z";
+    const url = "https://www.googleapis.com/calendar/v3/calendars/primary/events" +
+      "?timeMin=" + encodeURIComponent(timeMin) + "&timeMax=" + encodeURIComponent(timeMax) +
+      "&singleEvents=true&orderBy=startTime&maxResults=250";
+    const res = await fetch(url, { headers: { Authorization: "Bearer " + googleAccessToken } });
+    if (res.status === 401) {
+      // Token expired mid-session \u2014 clear it and the connected flag so the
+      // UI honestly reflects "not connected" instead of showing Disconnect
+      // for a session that's actually already gone.
+      googleAccessToken = null;
+      S.settings.googleCalendarConnected = false;
+      await saveSettings();
+      showToast("Google Calendar session expired \u2014 reconnect from More.");
+      return false;
+    }
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    S.googleEvents = (data.items || []).filter((it) => it.status !== "cancelled").map(normalizeGoogleEvent);
+    S.settings.googleCalendarLastSync = Date.now();
+    await saveSettings();
+    return true;
+  } catch (e) {
+    showErrorBanner("Couldn\u2019t reach Google Calendar: " + (e && e.message ? e.message : "network error"));
+    return false;
+  } finally {
+    googleFetchInFlight = false;
+  }
+}
+
+function googleEventsForDate(iso) {
+  return S.googleEvents.filter((e) => e.startDate === iso);
+}
+
+function googleEventRowHtml(ev) {
+  const time = ev.allDay ? "All day" : (ev.startTime || "");
+  return (
+    '<div class="task-row google-event-row" data-google-event="' + ev.id + '">' +
+      '<span class="check" style="border-style:dashed;background:none"><svg style="width:12px;height:12px"><use href="#ic-calendar"/></svg></span>' +
+      '<div class="task-main">' +
+        '<div class="task-row-top"><span class="task-title">' + escapeHtml(ev.title) + "</span></div>" +
+        '<div class="task-meta"><span class="task-meta-when">' + escapeHtml(time) + '</span><span class="google-badge">Google</span></div>' +
+      "</div>" +
+    "</div>"
+  );
+}
+function openGoogleEventInfo(id) {
+  const ev = S.googleEvents.find((e) => e.id === id);
+  if (!ev) return;
+  const when = ev.allDay ? "All day" : (ev.startTime || "") + (ev.endTime ? " \u2013 " + ev.endTime : "");
+  openSheet(
+    '<div class="sheet-head"><span class="title">Google Calendar event</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<h3 style="margin:0 0 4px">' + escapeHtml(ev.title) + "</h3>" +
+      '<p style="color:var(--text2);margin:0 0 12px">' + escapeHtml(fmtDateHeading(ev.startDate).weekday) + ", " + escapeHtml(fmtDateHeading(ev.startDate).dayMonth) + " \u00b7 " + escapeHtml(when) + "</p>" +
+      (ev.location ? '<p style="margin:0 0 12px">\uD83D\uDCCD ' + escapeHtml(ev.location) + "</p>" : "") +
+      '<p style="color:var(--text2);font-size:13px;margin:0 0 16px">From Google Calendar \u2014 read-only here. Edit it in Google Calendar to make changes.</p>' +
+      (ev.htmlLink ? '<a class="btn secondary" style="display:block;text-align:center;text-decoration:none" href="' + escapeHtml(ev.htmlLink) + '" target="_blank" rel="noopener">Open in Google Calendar</a>' : "") +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = closeSheet;
+}
+function wireGoogleEventRows(container) {
+  container.querySelectorAll("[data-google-event]").forEach((el) => {
+    el.onclick = () => openGoogleEventInfo(el.getAttribute("data-google-event"));
+  });
+}
+
 /* ---------------- CALENDAR ---------------- */
 const CAL_MAX_VISIBLE = 3;
 
@@ -1624,14 +1799,21 @@ function renderCalendar() {
     const dayTasks = S.tasks
       .filter((t) => t.startDate === cell.iso && t.showOnCalendar !== false)
       .sort((a, b) => (a.allDay ? "" : a.startTime || "").localeCompare(b.allDay ? "" : b.startTime || ""));
-    const visible = dayTasks.slice(0, CAL_MAX_VISIBLE);
-    const extra = dayTasks.length - visible.length;
-    const eventsHtml = visible.map((t) => {
+    const dayGoogle = googleEventsForDate(cell.iso);
+    const totalCount = dayTasks.length + dayGoogle.length;
+    const visibleTasks = dayTasks.slice(0, CAL_MAX_VISIBLE);
+    const visibleGoogle = dayGoogle.slice(0, Math.max(0, CAL_MAX_VISIBLE - visibleTasks.length));
+    const extra = totalCount - visibleTasks.length - visibleGoogle.length;
+    const eventsHtml = visibleTasks.map((t) => {
       const done = t.status === "completed";
       const cat = catById(t.categoryId);
       const timeLabel = t.allDay ? "" : '<span class="t">' + escapeHtml(t.startTime || "") + "</span>";
       return '<span class="day-event ' + (done ? "done" : "") + '" style="border-left:3px solid var(--' + cat.color + ')" ' +
         'data-drag-task="' + t.id + '" data-drag-date="' + cell.iso + '">' + timeLabel + (timeLabel ? " " : "") + escapeHtml(t.title) + "</span>";
+    }).join("") + visibleGoogle.map((ev) => {
+      const timeLabel = ev.allDay ? "" : '<span class="t">' + escapeHtml(ev.startTime || "") + "</span>";
+      return '<span class="day-event" style="border-left:3px dashed var(--accent);color:var(--text2)" data-google-event="' + ev.id + '">' +
+        timeLabel + (timeLabel ? " " : "") + escapeHtml(ev.title) + "</span>";
     }).join("");
     const moreHtml = extra > 0 ? '<span class="cal-more" data-cal-day="' + cell.iso + '">+' + extra + " more</span>" : "";
 
@@ -1662,12 +1844,17 @@ function renderCalendar() {
 
 function renderDaySchedule(iso) {
   const tasks = activeTasksForDate(iso);
+  const gEvents = googleEventsForDate(iso);
   const heading = fmtDateHeading(iso);
   let body;
-  if (!tasks.length) {
+  if (!tasks.length && !gEvents.length) {
     body = '<div class="empty" style="padding:32px 0 8px"><h3>Nothing planned.</h3></div>';
   } else {
-    body = '<div class="card">' + tasks.map(taskRowHtml).join("") + "</div>";
+    body = tasks.length ? '<div class="card">' + tasks.map(taskRowHtml).join("") + "</div>" : "";
+    if (gEvents.length) {
+      body += '<div class="section-label" style="margin-top:' + (tasks.length ? "var(--sp-lg)" : "var(--sp-sm)") + '">FROM GOOGLE CALENDAR</div>' +
+        '<div class="card">' + gEvents.map(googleEventRowHtml).join("") + "</div>";
+    }
   }
   return (
     '<div class="day-schedule">' +
@@ -1681,6 +1868,7 @@ function renderDaySchedule(iso) {
 function afterCalendarRender() {
   const view = document.getElementById("view");
   wireTaskRows(view);
+  wireGoogleEventRows(view);
   view.querySelectorAll("[data-cal-day]").forEach((el) => {
     el.addEventListener("click", () => { S.calSelected = el.getAttribute("data-cal-day"); render(); });
   });
@@ -3041,10 +3229,34 @@ function renderMore() {
       '<button class="' + (S.settings.theme !== "dark" ? "active" : "") + '" id="themeLightBtn">Light</button>' +
       '<button class="' + (S.settings.theme === "dark" ? "active" : "") + '" id="themeDarkBtn">Dark</button>' +
     "</div>" +
+    '<div class="section-label">GOOGLE CALENDAR</div>' +
+    renderGoogleCalendarSettings() +
     '<div class="section-label">ABOUT</div>' +
     '<div class="card"><div class="list-row"><span class="lbl">Together</span><span class="val">Version 1.0</span></div></div>' +
     "</div>"
   );
+}
+
+function renderGoogleCalendarSettings() {
+  const connected = S.settings.googleCalendarConnected && googleAccessToken;
+  if (connected) {
+    const lastSync = S.settings.googleCalendarLastSync
+      ? new Date(S.settings.googleCalendarLastSync).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "not yet";
+    return '<div class="card">' +
+      '<div class="list-row"><span class="lbl">Status</span><span class="val" style="color:var(--olive)">Connected</span></div>' +
+      '<div class="list-row"><span class="lbl">Last synced</span><span class="val">' + lastSync + "</span></div>" +
+      "</div>" +
+      '<div class="btn-row" style="margin-top:10px">' +
+        '<button class="btn secondary" id="gcalSyncNow">Sync now</button>' +
+        '<button class="btn ghost" id="gcalDisconnect">Disconnect</button>' +
+      "</div>";
+  }
+  return '<div class="card" style="padding:16px">' +
+    '<p style="color:var(--text2);font-size:14px;margin:0 0 12px">Read-only \u2014 Together will never change anything in your Google Calendar. Needs a free Client ID from Google Cloud Console first.</p>' +
+    '<div class="field"><label>GOOGLE CLIENT ID</label><input type="text" id="gcalClientId" placeholder="xxxx.apps.googleusercontent.com" value="' + escapeHtml(S.settings.googleClientId || "") + '"></div>' +
+    '<button class="btn" id="gcalConnect" style="margin-top:4px">Connect Google Calendar</button>' +
+    "</div>";
 }
 function afterMoreRender() {
   document.querySelectorAll("[data-nav]").forEach((b) => b.onclick = () => navigate(b.getAttribute("data-nav")));
@@ -3083,6 +3295,31 @@ function afterMoreRender() {
       render();
     }
   };
+
+  const gcalClientIdInput = document.getElementById("gcalClientId");
+  if (gcalClientIdInput) {
+    gcalClientIdInput.oninput = (e) => { S.settings.googleClientId = e.target.value.trim(); };
+  }
+  const gcalConnectBtn = document.getElementById("gcalConnect");
+  if (gcalConnectBtn) {
+    gcalConnectBtn.onclick = async () => {
+      if (!S.settings.googleClientId) { showToast("Paste your Google Client ID first."); return; }
+      await saveSettings();
+      connectGoogleCalendar();
+    };
+  }
+  const gcalSyncBtn = document.getElementById("gcalSyncNow");
+  if (gcalSyncBtn) {
+    gcalSyncBtn.onclick = async () => {
+      const ok = await fetchGoogleCalendarEvents();
+      render();
+      if (ok) showToast("Synced with Google Calendar");
+    };
+  }
+  const gcalDisconnectBtn = document.getElementById("gcalDisconnect");
+  if (gcalDisconnectBtn) {
+    gcalDisconnectBtn.onclick = disconnectGoogleCalendar;
+  }
 }
 
 /* ---------------- EXPORT / IMPORT ---------------- */
@@ -3233,6 +3470,11 @@ async function seedFixedFinancesOnce() {
   await idbPut("settings", S.settings);
 }
 
+// Sergio's real Google OAuth Client ID, pre-filled once so Settings doesn't
+// need it pasted in by hand \u2014 the Client ID isn't a secret, it's safe to ship.
+const KNOWN_GOOGLE_CLIENT_ID = "1020463994542-un9o6752pun5svimlnf780nhj1csjf77.apps.googleusercontent.com";
+window.KNOWN_GOOGLE_CLIENT_ID = KNOWN_GOOGLE_CLIENT_ID;
+
 const SEED_STUFF_ITEMS = [
   { title: "PUK \u2014 S\u00e9rgio", content: "74875919" },
   { title: "PIN Telem\u00f3vel \u2014 S\u00e9rgio", content: "7698" },
@@ -3277,10 +3519,23 @@ async function init() {
         notifications: { daily: false, reminders: false, permission: "default" },
         lastBriefingDate: null,
         theme: "light",
+        googleClientId: KNOWN_GOOGLE_CLIENT_ID,
+        googleCalendarConnected: false,
+        googleCalendarLastSync: null,
       };
       await idbPut("settings", settingsRow);
     }
     if (!settingsRow.theme) settingsRow.theme = "light"; // migrate existing installs
+    if (settingsRow.googleClientId === undefined) settingsRow.googleClientId = "";
+    if (settingsRow.googleCalendarConnected === undefined) settingsRow.googleCalendarConnected = false;
+    if (settingsRow.googleCalendarLastSync === undefined) settingsRow.googleCalendarLastSync = null;
+    // One-time backfill for the install this Client ID was created for \u2014
+    // it already has an empty string on file from before the ID existed.
+    if (!settingsRow.googleClientId && !settingsRow.googleClientIdSeeded) {
+      settingsRow.googleClientId = KNOWN_GOOGLE_CLIENT_ID;
+      settingsRow.googleClientIdSeeded = true;
+      await idbPut("settings", settingsRow);
+    }
     S.settings = settingsRow;
     applyTheme(S.settings.theme);
 
@@ -3300,6 +3555,13 @@ async function init() {
     setInterval(() => { checkReminders(); checkDailyBriefing(); }, 30000);
     checkReminders();
     checkDailyBriefing();
+
+    // Try to silently pick back up a Google Calendar connection from a
+    // previous session \u2014 no popup unless the browser's Google session has
+    // actually expired, in which case the person just reconnects from More.
+    if (S.settings.googleClientId && S.settings.googleCalendarConnected) {
+      setTimeout(() => { attemptSilentGoogleReconnect(); }, 800);
+    }
   } catch (err) {
     console.error(err);
     document.getElementById("view").innerHTML =
