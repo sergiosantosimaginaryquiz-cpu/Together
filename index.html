@@ -675,6 +675,50 @@ a{color:inherit; text-decoration:none;}
 <div class="toast" id="toast"></div>
 <div id="errBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#B95C50;color:#fff;padding:10px 16px;font:13px -apple-system,sans-serif;line-height:1.4;"></div>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+  import {
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+    collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch,
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCR8h-m0cRrlsC_1DJkudty_sMIMBTQcYo",
+    authDomain: "together-app-ff54d.firebaseapp.com",
+    projectId: "together-app-ff54d",
+    storageBucket: "together-app-ff54d.firebasestorage.app",
+    messagingSenderId: "857524129984",
+    appId: "1:857524129984:web:70f05e7002c6f6862f9d25",
+  };
+
+  try {
+    const fbApp = initializeApp(firebaseConfig);
+    const fbAuth = getAuth(fbApp);
+    // Offline-first, like the rest of this app: Firestore keeps a local cache
+    // and syncs when back online, across multiple tabs of the same device.
+    const fsDb = initializeFirestore(fbApp, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+
+    // Bridge for the classic (non-module) app.js to call into \u2014 keeps the
+    // whole app as plain global functions/scripts, same as it's always been,
+    // with just this one small ES-module doorway to the Firebase SDK.
+    window.__firebase = {
+      db: fsDb,
+      auth: fbAuth,
+      signIn: () => signInAnonymously(fbAuth),
+      onAuthStateChanged: (cb) => onAuthStateChanged(fbAuth, cb),
+      collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch,
+    };
+  } catch (e) {
+    window.__firebaseInitError = e;
+    console.error("Firebase failed to initialize:", e);
+  } finally {
+    window.__firebaseReady = true;
+    window.dispatchEvent(new Event("firebase-ready"));
+  }
+</script>
 <script>
 /* =========================================================
    TOGETHER — local-first PWA
@@ -927,6 +971,80 @@ function personShort(assignedTo) {
 }
 
 /* ---------------- Data access / CRUD ---------------- */
+/* ---------------- Firestore (shared household data) ----------------
+ * Bridges into the tiny ES-module script in index.html that talks to the
+ * Firebase SDK (window.__firebase) \u2014 app.js itself stays a plain classic
+ * script, same as always, just with this one doorway out to Firestore.
+ * Only tasks/categories/accounts/balanceSnapshots/shoppingItems/stuffItems
+ * are shared this way; settings (theme, Google Calendar connection, etc.)
+ * stay local per-device, since those genuinely shouldn't sync between phones.
+ * ------------------------------------------------------------------- */
+const HOUSEHOLD_ID = "sr-household-7f2c9ae4d1";
+window.HOUSEHOLD_ID = HOUSEHOLD_ID; // exposed for testing, same pattern as the other constants
+function fsReady() { return !!(window.__firebase && window.__firebaseReady && !window.__firebaseInitError); }
+function fsColl(name) { return window.__firebase.collection(window.__firebase.db, "households", HOUSEHOLD_ID, name); }
+function fsDocRef(name, id) { return window.__firebase.doc(window.__firebase.db, "households", HOUSEHOLD_ID, name, id); }
+function waitForFirebaseReady() {
+  return new Promise((resolve) => {
+    if (window.__firebaseReady) return resolve();
+    window.addEventListener("firebase-ready", () => resolve(), { once: true });
+    setTimeout(resolve, 6000); // don't hang the app forever if the module script never loads
+  });
+}
+async function fsSave(name, obj, id) {
+  if (!fsReady()) return;
+  try { await window.__firebase.setDoc(fsDocRef(name, id || obj.id), obj); }
+  catch (e) { console.error("Firestore save failed (" + name + "):", e); showErrorBanner("Couldn\u2019t save to the shared household data. Changes are only on this device for now."); }
+}
+async function fsRemove(name, id) {
+  if (!fsReady()) return;
+  try { await window.__firebase.deleteDoc(fsDocRef(name, id)); }
+  catch (e) { console.error("Firestore delete failed (" + name + "):", e); }
+}
+function fsListen(name, stateKey) {
+  window.__firebase.onSnapshot(fsColl(name), (snap) => {
+    S[stateKey] = snap.docs.map((d) => d.data());
+    render();
+  }, (err) => { console.error("Firestore listen error (" + name + "):", err); });
+}
+function startFirestoreListeners() {
+  fsListen("tasks", "tasks");
+  fsListen("categories", "categories");
+  fsListen("accounts", "accounts");
+  fsListen("balanceSnapshots", "balanceSnapshots");
+  fsListen("shoppingItems", "shoppingItems");
+  fsListen("stuffItems", "stuffItems");
+}
+// One-time, per-device: push whatever's currently in THIS device's local
+// storage up to the shared household in Firestore. Gated on a local flag
+// (not a shared "has anyone migrated yet" marker) so that if Rita's phone
+// and Sergio's phone both have their own local history, both get merged in
+// \u2014 upserting by the item's existing id makes this safe even if it runs
+// on both devices, or runs twice.
+async function migrateLocalDataToFirestoreIfNeeded() {
+  if (!fsReady() || S.settings.firestoreMigrated) return;
+  const ops = [];
+  for (const c of S.categories) ops.push({ name: "categories", id: c.id, data: c });
+  for (const t of S.tasks) ops.push({ name: "tasks", id: t.id, data: t });
+  for (const a of S.accounts) ops.push({ name: "accounts", id: a.id, data: a });
+  for (const s of S.balanceSnapshots) ops.push({ name: "balanceSnapshots", id: s.monthKey, data: s });
+  for (const i of S.shoppingItems) ops.push({ name: "shoppingItems", id: i.id, data: i });
+  for (const i of S.stuffItems) ops.push({ name: "stuffItems", id: i.id, data: i });
+  const CHUNK = 400; // Firestore batches cap at 500 writes
+  try {
+    for (let i = 0; i < ops.length; i += CHUNK) {
+      const batch = window.__firebase.writeBatch(window.__firebase.db);
+      for (const op of ops.slice(i, i + CHUNK)) batch.set(fsDocRef(op.name, op.id), op.data);
+      await batch.commit();
+    }
+    S.settings.firestoreMigrated = true;
+    await saveSettings();
+  } catch (e) {
+    console.error("Firestore migration failed:", e);
+    showErrorBanner("Couldn\u2019t upload this device\u2019s data to the shared household yet \u2014 will retry next time you open the app.");
+  }
+}
+
 async function loadAll() {
   S.categories = await idbGetAll("categories");
   S.tasks = await idbGetAll("tasks");
@@ -951,15 +1069,15 @@ async function migrateCategoriesTracksMoney() {
 
 async function saveTask(task) {
   task.updatedAt = Date.now();
-  await idbPut("tasks", task);
   const idx = S.tasks.findIndex((t) => t.id === task.id);
   if (idx >= 0) S.tasks[idx] = task; else S.tasks.push(task);
+  await fsSave("tasks", task);
   return task;
 }
 
 async function deleteTaskById(id) {
-  await idbDelete("tasks", id);
   S.tasks = S.tasks.filter((t) => t.id !== id);
+  await fsRemove("tasks", id);
 }
 
 // Deletes every task in a recurring series from a given date onward
@@ -971,55 +1089,55 @@ async function deleteRecurrenceOnward(recurrenceId, fromDateIso) {
 }
 
 async function saveCategory(cat) {
-  await idbPut("categories", cat);
   const idx = S.categories.findIndex((c) => c.id === cat.id);
   if (idx >= 0) S.categories[idx] = cat; else S.categories.push(cat);
+  await fsSave("categories", cat);
 }
 
 async function saveAccount(acc) {
   acc.updatedAt = Date.now();
-  await idbPut("accounts", acc);
   const idx = S.accounts.findIndex((a) => a.id === acc.id);
   if (idx >= 0) S.accounts[idx] = acc; else S.accounts.push(acc);
+  await fsSave("accounts", acc);
   return acc;
 }
 
 async function deleteAccountById(id) {
-  await idbDelete("accounts", id);
   S.accounts = S.accounts.filter((a) => a.id !== id);
+  await fsRemove("accounts", id);
 }
 
 async function saveShoppingItem(item) {
   item.updatedAt = Date.now();
-  await idbPut("shoppingItems", item);
   const idx = S.shoppingItems.findIndex((i) => i.id === item.id);
   if (idx >= 0) S.shoppingItems[idx] = item; else S.shoppingItems.push(item);
+  await fsSave("shoppingItems", item);
   return item;
 }
 async function deleteShoppingItemById(id) {
-  await idbDelete("shoppingItems", id);
   S.shoppingItems = S.shoppingItems.filter((i) => i.id !== id);
+  await fsRemove("shoppingItems", id);
 }
 
 async function saveStuffItem(item) {
   item.updatedAt = Date.now();
-  await idbPut("stuffItems", item);
   const idx = S.stuffItems.findIndex((i) => i.id === item.id);
   if (idx >= 0) S.stuffItems[idx] = item; else S.stuffItems.push(item);
+  await fsSave("stuffItems", item);
   return item;
 }
 async function deleteStuffItemById(id) {
-  await idbDelete("stuffItems", id);
   S.stuffItems = S.stuffItems.filter((i) => i.id !== id);
+  await fsRemove("stuffItems", id);
 }
 
 function monthKeyOf(iso) { return iso.slice(0, 7); }
 function getSnapshot(monthKey) { return S.balanceSnapshots.find((s) => s.monthKey === monthKey) || null; }
 async function saveBalanceSnapshot(monthKey, amount) {
   const snap = { monthKey, amount: Number(amount), recordedAt: Date.now() };
-  await idbPut("balanceSnapshots", snap);
   const idx = S.balanceSnapshots.findIndex((s) => s.monthKey === monthKey);
   if (idx >= 0) S.balanceSnapshots[idx] = snap; else S.balanceSnapshots.push(snap);
+  await fsSave("balanceSnapshots", snap, monthKey);
   return snap;
 }
 
@@ -1027,11 +1145,12 @@ async function deleteCategoryById(id) {
   const inUse = S.tasks.some((t) => t.categoryId === id);
   if (inUse) {
     S.tasks.filter((t) => t.categoryId === id).forEach((t) => { t.categoryId = "other"; });
-    for (const t of S.tasks.filter((t) => t.categoryId === "other")) await idbPut("tasks", t);
+    for (const t of S.tasks.filter((t) => t.categoryId === "other")) await fsSave("tasks", t);
   }
-  await idbDelete("categories", id);
   S.categories = S.categories.filter((c) => c.id !== id);
+  await fsRemove("categories", id);
 }
+
 
 async function saveSettings() {
   await idbPut("settings", Object.assign({ key: "app" }, S.settings));
@@ -3554,10 +3673,8 @@ async function init() {
     if (S.categories.length === 0) {
       for (const c of DEFAULT_CATEGORIES) await saveCategory(c);
     }
-    await seedFixedFinancesOnce();
-    await seedStuffItemsOnce();
 
-    render();
+    render(); // instant first paint from local data, same as always
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
@@ -3566,6 +3683,26 @@ async function init() {
     setInterval(() => { checkReminders(); checkDailyBriefing(); }, 30000);
     checkReminders();
     checkDailyBriefing();
+
+    // Connect to the shared household in the background \u2014 doesn't block the
+    // first paint above. Once connected: push this device's local data up
+    // once (safe/idempotent even if it happens on both phones), then start
+    // listening for live changes from Rita's (or any) device.
+    (async () => {
+      await waitForFirebaseReady();
+      if (!fsReady()) {
+        console.error("Firebase unavailable \u2014 continuing locally only, not shared.", window.__firebaseInitError);
+        return;
+      }
+      try {
+        await window.__firebase.signIn();
+        await migrateLocalDataToFirestoreIfNeeded();
+        startFirestoreListeners();
+      } catch (e) {
+        console.error("Firebase startup failed:", e);
+        showErrorBanner("Couldn\u2019t connect to the shared household right now \u2014 working from this device\u2019s local data for now.");
+      }
+    })();
 
     // Try to silently pick back up a Google Calendar connection from a
     // previous session \u2014 no popup unless the browser's Google session has
