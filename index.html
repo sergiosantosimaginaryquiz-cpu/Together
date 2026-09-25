@@ -385,9 +385,10 @@ a{color:inherit; text-decoration:none;}
 .sheet-head{
   display:flex; align-items:center; justify-content:space-between;
   padding: var(--sp-sm) var(--sp-lg) var(--sp-md);
+  flex:0 0 auto;
 }
 .sheet-head .title{font-size:18px; font-weight:650;}
-.sheet-body{overflow-y:auto; padding: 0 var(--sp-lg) var(--sp-lg);}
+.sheet-body{overflow-y:auto; padding: 0 var(--sp-lg) var(--sp-lg); flex:1 1 auto; min-height:0;}
 .link-btn{border:none; background:none; color:var(--accent); font-weight:600; font-size:15px; padding:6px;}
 
 .fullscreen{
