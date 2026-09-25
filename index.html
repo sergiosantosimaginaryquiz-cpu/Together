@@ -54,6 +54,9 @@
   --dur-normal:200ms;
   --dur-slow:320ms;
   --ease-standard:cubic-bezier(.32,.72,0,1);
+  --ease-out:cubic-bezier(0.22,1,0.36,1);
+  --ease-in:cubic-bezier(0.4,0,1,1);
+  --ease-spring:cubic-bezier(0.34,1.32,0.64,1);
 
   --nav-h:64px;
   --safe-b:env(safe-area-inset-bottom, 0px);
@@ -638,6 +641,75 @@ a{color:inherit; text-decoration:none;}
 .onb-wrap .btn{margin-top:8px;}
 .spacer{height:0;}
 .skip-link{text-align:center; color:var(--text2); font-size:14px; padding:16px;}
+
+/* =========================================================
+   MOTION SYSTEM
+   Purposeful, physical, restrained \u2014 not decorative. Every rule
+   here exists to communicate hierarchy, weight or feedback.
+   ========================================================= */
+
+/* ---- Page-level transition: only fires on an actual route change
+   (see render()'s routeChanged check) so ordinary interactions
+   within a screen stay instant. ---- */
+@keyframes viewEnter{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.view-enter{ animation:viewEnter var(--dur-slow) var(--ease-out) both; }
+
+/* ---- Buttons: physical elevation, hover lift, tactile press-in.
+   Kept extremely subtle per the brief \u2014 no bounce, no big scale. ---- */
+.btn{
+  transition:transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+  box-shadow:0 2px 5px rgba(0,0,0,.08), 0 6px 14px rgba(0,0,0,.06);
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 5px 14px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06); }
+.btn:active{ transform:translateY(1px) scale(.985); box-shadow:0 1px 3px rgba(0,0,0,.08); opacity:1; transition-duration:90ms; }
+.btn.secondary{ box-shadow:0 1px 2px rgba(0,0,0,.05); }
+.btn.ghost{ box-shadow:none; }
+.btn.ghost:hover{ transform:none; box-shadow:none; }
+.chip, .icon-btn, .link-btn{ transition:transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+.chip:active, .icon-btn:active{ transform:scale(.94); transition-duration:90ms; }
+.link-btn:active{ opacity:.6; transition-duration:90ms; }
+.fab{ transition:transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-out); }
+.fab:hover{ transform:translateY(-1px); }
+.fab:active{ transform:scale(.92); transition-duration:90ms; }
+
+/* ---- Cards & rows: interactive surfaces lift slightly on hover,
+   press into the page on tap. Non-interactive cards get nothing. ---- */
+.card[data-nav], .card[role="button"], .list-row, .task-row, .shop-row, .google-event-row{
+  transition:transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.card[data-nav]:hover, .card[role="button"]:hover{ transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.card[data-nav]:active, .card[role="button"]:active{ transform:translateY(1px) scale(.995); box-shadow:var(--shadow-sm); transition-duration:90ms; }
+
+/* ---- Checkboxes: the checkmark feels placed, not just switched. ---- */
+.check{ transition:background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform 90ms var(--ease-out); }
+.check svg{ transition:opacity var(--dur-fast) var(--ease-spring), transform var(--dur-fast) var(--ease-spring); transform:scale(.6); }
+.check.done svg{ opacity:1; transform:scale(1); }
+.check:active{ transform:scale(.88); }
+
+/* ---- Toggles: thumb glides, background eases with it. ---- */
+.toggle{ transition:background var(--dur-normal) var(--ease-out); }
+.toggle .knob{ transition:left var(--dur-normal) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-out); }
+
+/* ---- Sheets & fullscreen editors: rise into place like a physical
+   surface, not a flat fade. Backdrop dims and blurs behind them. ---- */
+.sheet{ transition:transform var(--dur-slow) var(--ease-out); }
+.overlay{ transition:opacity var(--dur-normal) var(--ease-out), backdrop-filter var(--dur-normal) var(--ease-out); }
+.overlay.show{ backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+.fullscreen{ transition:transform var(--dur-slow) var(--ease-out), opacity var(--dur-slow) var(--ease-out); }
+
+/* ---- Toasts: arrive with a touch of spring rather than a flat rise. ---- */
+.toast{ transition:opacity var(--dur-normal) var(--ease-spring), transform var(--dur-normal) var(--ease-spring); }
+
+/* ---- New list items (shopping, checklist) settle into place instead
+   of just appearing \u2014 applied via a short-lived class in JS. ---- */
+@keyframes listItemEnter{
+  from{ opacity:0; transform:translateY(8px) scale(.98); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+.list-item-enter{ animation:listItemEnter var(--dur-normal) var(--ease-out) both; }
 
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important; animation:none !important;}
@@ -1387,9 +1459,12 @@ function currentRoute() {
   return h;
 }
 
+let lastRenderedHash = null;
 function render() {
   if (!S.settings || !S.settings.onboarded) { renderOnboarding(); return; }
   const hash = currentRoute();
+  const routeChanged = hash !== lastRenderedHash;
+  lastRenderedHash = hash;
   closeSheet();
   const view = document.getElementById("view");
   const nav = document.getElementById("bottomNav");
@@ -1417,6 +1492,16 @@ function render() {
     view.innerHTML = renderTaskDetail(id); showNav = false; showFab = false;
   }
   else { view.innerHTML = renderToday(); navActive = "today"; }
+
+  // Premium page-level transition \u2014 but ONLY when the route actually
+  // changed. render() also fires on same-screen interactions (a checkbox
+  // toggle, search-as-you-type, a sheet field edit), and animating those
+  // too would make the app feel slower, not premium.
+  if (routeChanged) {
+    view.classList.remove("view-enter");
+    void view.offsetWidth; // force reflow so the animation restarts
+    view.classList.add("view-enter");
+  }
 
   nav.style.display = showNav ? "flex" : "none";
   fab.style.display = showFab ? "flex" : "none";
@@ -2937,14 +3022,18 @@ function openAccountEditor(id) {
 }
 
 /* ---------------- SHOPPING ---------------- */
+const seenShoppingItemIds = new Set();
 function renderShopping() {
   const unchecked = S.shoppingItems.filter((i) => !i.checked).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   const checked = S.shoppingItems.filter((i) => i.checked).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-  const rowHtml = (item) =>
-    '<div class="shop-row"><button class="check ' + (item.checked ? "done" : "") + '" data-shop-toggle="' + item.id + '" aria-label="Toggle bought"><svg><use href="#ic-check"/></svg></button>' +
+  const rowHtml = (item) => {
+    const isNew = !seenShoppingItemIds.has(item.id);
+    seenShoppingItemIds.add(item.id);
+    return '<div class="shop-row ' + (isNew ? "list-item-enter" : "") + '"><button class="check ' + (item.checked ? "done" : "") + '" data-shop-toggle="' + item.id + '" aria-label="Toggle bought"><svg><use href="#ic-check"/></svg></button>' +
     '<span class="lbl ' + (item.checked ? "done" : "") + '">' + escapeHtml(item.name) + "</span>" +
     '<button class="icon-btn" style="width:28px;height:28px;box-shadow:none;background:none" data-shop-del="' + item.id + '"><svg style="width:15px;height:15px"><use href="#ic-trash"/></svg></button>' +
     "</div>";
+  };
 
   return (
     '<div class="topbar"><h1>Shopping</h1></div>' +
