@@ -78,6 +78,16 @@
 }
 :root[data-theme="dark"] .check{background:var(--surface-2);}
 :root[data-theme="dark"] .onb-logo{box-shadow:none;}
+/* A little more intentional than "inverted colors": subtle card edges for
+   definition (shadows barely read on true black), a glowing accent on the
+   FAB and today-indicators, and richer depth between surface levels. */
+:root[data-theme="dark"] .card{border:1px solid rgba(255,255,255,.06);}
+:root[data-theme="dark"] .fab{box-shadow:0 0 0 1px rgba(0,122,255,.4), 0 8px 28px rgba(0,122,255,.45), 0 0 40px rgba(0,122,255,.18);}
+:root[data-theme="dark"] .nav-item.active svg{filter:drop-shadow(0 0 6px rgba(0,122,255,.55));}
+:root[data-theme="dark"] .week-day.active{box-shadow:0 0 16px rgba(0,122,255,.35);}
+:root[data-theme="dark"] .bottom-nav{background:rgba(20,20,22,.72); border-top:1px solid rgba(255,255,255,.08);}
+:root[data-theme="dark"] .sheet, :root[data-theme="dark"] .fullscreen{background:var(--surface-2);}
+:root[data-theme="dark"] .fin-hero{background:linear-gradient(160deg, var(--surface-2), var(--surface));}
 
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -408,7 +418,7 @@ a{color:inherit; text-decoration:none;}
 /* ---------- Forms ---------- */
 .field{margin-bottom:var(--sp-lg);}
 .field label{display:block; font-size:13px; font-weight:650; color:var(--text2); margin-bottom:8px;}
-.field input[type=text], .field input[type=date], .field input[type=time], .field textarea, .field input[type=search]{
+.field input[type=text], .field input[type=date], .field input[type=time], .field input[type=number], .field textarea, .field input[type=search]{
   width:100%;
   border:1px solid var(--line);
   background:var(--surface);
@@ -422,6 +432,7 @@ a{color:inherit; text-decoration:none;}
   width:100%;
   border:none;
   background:none;
+  color:var(--text);
   font-size:24px;
   font-weight:650;
   letter-spacing:-0.01em;
