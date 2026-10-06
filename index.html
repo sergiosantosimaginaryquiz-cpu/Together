@@ -1237,6 +1237,89 @@ async function deleteCategoryById(id) {
 }
 
 
+/* ---------------- Duplicate cleanup ----------------
+ * Two phones that each seeded/created the "same" item before syncing
+ * existed end up with copies that have different ids, so Firestore (which
+ * merges by id) correctly keeps both. This finds items that are identical
+ * in every visible way and removes the extras. The winner is chosen
+ * deterministically (completed first, then oldest, then lowest id) so it's
+ * always the same copy no matter which phone runs the cleanup.
+ * ---------------------------------------------------- */
+function dupKeyTask(t) {
+  const title = String(t.title || "").trim().toLowerCase();
+  const monthlyMoney = t.amount != null && t.recurrence && t.recurrence.frequency === "monthly";
+  // Monthly bills seeded on different days by each phone still count as the
+  // same bill for the same month.
+  const when = monthlyMoney ? "m:" + String(t.startDate || "").slice(0, 7) : "d:" + (t.startDate || "") + "|" + (t.startTime || "");
+  return [t.categoryId || "", title, when, t.amount == null ? "" : t.amount, t.flowType || "", t.assignedTo || ""].join("|");
+}
+function dupKeyStuff(i) { return String(i.title || "").trim().toLowerCase() + "|" + String(i.content || "").trim(); }
+function dupKeyShopping(i) { return String(i.name || "").trim().toLowerCase() + "|" + (i.checked ? 1 : 0); }
+function dupKeyAccount(a) { return String(a.name || "").trim().toLowerCase() + "|" + (a.openingBalance || 0) + "|" + (a.openingDate || ""); }
+function dupWinnerOrder(a, b) {
+  const ac = a.status === "completed" ? 1 : 0, bc = b.status === "completed" ? 1 : 0;
+  if (ac !== bc) return bc - ac;
+  const ca = a.createdAt || 0, cb = b.createdAt || 0;
+  if (ca !== cb) return ca - cb;
+  return String(a.id) < String(b.id) ? -1 : 1;
+}
+function findDuplicatesIn(list, keyFn) {
+  const groups = new Map();
+  for (const it of list) {
+    const k = keyFn(it);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  }
+  const losers = [];
+  for (const g of groups.values()) {
+    if (g.length < 2) continue;
+    g.sort(dupWinnerOrder);
+    losers.push(...g.slice(1));
+  }
+  return losers;
+}
+function findDuplicates() {
+  return {
+    tasks: findDuplicatesIn(S.tasks, dupKeyTask),
+    stuffItems: findDuplicatesIn(S.stuffItems, dupKeyStuff),
+    shoppingItems: findDuplicatesIn(S.shoppingItems, dupKeyShopping),
+    accounts: findDuplicatesIn(S.accounts, dupKeyAccount),
+  };
+}
+function countDuplicates(d) { return d.tasks.length + d.stuffItems.length + d.shoppingItems.length + d.accounts.length; }
+async function removeDuplicates(d) {
+  for (const t of d.tasks) await deleteTaskById(t.id);
+  for (const i of d.stuffItems) await deleteStuffItemById(i.id);
+  for (const i of d.shoppingItems) await deleteShoppingItemById(i.id);
+  for (const a of d.accounts) await deleteAccountById(a.id);
+  return countDuplicates(d);
+}
+function openDedupeSheet() {
+  const d = findDuplicates();
+  const n = countDuplicates(d);
+  if (n === 0) { showToast("No duplicates found"); return; }
+  const parts = [];
+  if (d.tasks.length) parts.push(d.tasks.length + " task" + (d.tasks.length === 1 ? "" : "s") + " / bills");
+  if (d.stuffItems.length) parts.push(d.stuffItems.length + " Stuff note" + (d.stuffItems.length === 1 ? "" : "s"));
+  if (d.shoppingItems.length) parts.push(d.shoppingItems.length + " shopping item" + (d.shoppingItems.length === 1 ? "" : "s"));
+  if (d.accounts.length) parts.push(d.accounts.length + " account" + (d.accounts.length === 1 ? "" : "s"));
+  openSheet(
+    '<div class="sheet-head"><span class="title">Remove duplicates</span><button class="icon-btn" id="closeSheetBtn"><svg><use href="#ic-close"/></svg></button></div>' +
+    '<div class="sheet-body">' +
+      '<p style="margin:0 0 8px">Found <b>' + n + ' extra cop' + (n === 1 ? "y" : "ies") + '</b>: ' + escapeHtml(parts.join(", ")) + ".</p>" +
+      '<p style="color:var(--text2);font-size:14px;margin:0 0 16px">Only items that are identical in every visible detail are matched. One copy of each is kept (a completed one if there is one, otherwise the oldest), and the extras are removed for both of you.</p>' +
+      '<button class="btn" id="confirmDedupe">Remove ' + n + " duplicate" + (n === 1 ? "" : "s") + "</button>" +
+    "</div>"
+  );
+  document.getElementById("closeSheetBtn").onclick = closeSheet;
+  document.getElementById("confirmDedupe").onclick = async () => {
+    const removed = await removeDuplicates(d);
+    closeSheet();
+    render();
+    showToast("Removed " + removed + " duplicate" + (removed === 1 ? "" : "s"));
+  };
+}
+
 async function saveSettings() {
   await idbPut("settings", Object.assign({ key: "app" }, S.settings));
 }
@@ -3450,6 +3533,7 @@ function renderMore() {
     '<div class="card">' +
       '<button class="link-btn" id="exportBtn">Export data</button><br>' +
       '<label class="link-btn" for="importInput" style="cursor:pointer">Import data</label>' +
+      '<br><button class="link-btn" id="dedupeBtn">Find &amp; remove duplicates</button>' +
       '<input type="file" id="importInput" accept="application/json" style="display:none">' +
     "</div>" +
     '<div class="section-label">APPEARANCE</div>' +
@@ -3506,6 +3590,7 @@ function afterMoreRender() {
     };
   };
   document.getElementById("exportBtn").onclick = exportData;
+  document.getElementById("dedupeBtn").onclick = openDedupeSheet;
   document.getElementById("importInput").onchange = importData;
   document.getElementById("themeLightBtn").onclick = async () => {
     if (S.settings.theme === "dark") {
