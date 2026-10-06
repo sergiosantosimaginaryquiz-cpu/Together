@@ -1,4 +1,4 @@
-const CACHE_NAME = "together-v1";
+const CACHE_NAME = "together-v3";
 const SHELL = [
   "./",
   "./index.html",
