@@ -1108,15 +1108,31 @@ function startFirestoreListeners() {
 // on both devices, or runs twice.
 async function migrateLocalDataToFirestoreIfNeeded() {
   if (!fsReady() || S.settings.firestoreMigrated) return;
+  // Shared data always wins. Before uploading anything, look at what the
+  // household already has and skip any local item that is already there \u2014
+  // either by id, or because an identical item exists under a different id
+  // (which is exactly how duplicates were created the first time around).
+  const specs = [
+    ["categories", S.categories, (c) => c.id, null],
+    ["tasks", S.tasks, (t) => t.id, dupKeyTask],
+    ["accounts", S.accounts, (a) => a.id, dupKeyAccount],
+    ["balanceSnapshots", S.balanceSnapshots, (x) => x.monthKey, null],
+    ["shoppingItems", S.shoppingItems, (i) => i.id, dupKeyShopping],
+    ["stuffItems", S.stuffItems, (i) => i.id, dupKeyStuff],
+  ];
   const ops = [];
-  for (const c of S.categories) ops.push({ name: "categories", id: c.id, data: c });
-  for (const t of S.tasks) ops.push({ name: "tasks", id: t.id, data: t });
-  for (const a of S.accounts) ops.push({ name: "accounts", id: a.id, data: a });
-  for (const s of S.balanceSnapshots) ops.push({ name: "balanceSnapshots", id: s.monthKey, data: s });
-  for (const i of S.shoppingItems) ops.push({ name: "shoppingItems", id: i.id, data: i });
-  for (const i of S.stuffItems) ops.push({ name: "stuffItems", id: i.id, data: i });
-  const CHUNK = 400; // Firestore batches cap at 500 writes
   try {
+    for (const [name, local, idOf, keyFn] of specs) {
+      const snap = await window.__firebase.getDocs(fsColl(name));
+      const ids = new Set(), keys = new Set();
+      snap.docs.forEach((d) => { const v = d.data(); ids.add(idOf(v)); if (keyFn) keys.add(keyFn(v)); });
+      for (const item of local) {
+        if (ids.has(idOf(item))) continue;
+        if (keyFn && keys.has(keyFn(item))) continue;
+        ops.push({ name, id: idOf(item), data: item });
+      }
+    }
+    const CHUNK = 400; // Firestore batches cap at 500 writes
     for (let i = 0; i < ops.length; i += CHUNK) {
       const batch = window.__firebase.writeBatch(window.__firebase.db);
       for (const op of ops.slice(i, i + CHUNK)) batch.set(fsDocRef(op.name, op.id), op.data);
@@ -3533,7 +3549,7 @@ function renderMore() {
     '<div class="card">' +
       '<button class="link-btn" id="exportBtn">Export data</button><br>' +
       '<label class="link-btn" for="importInput" style="cursor:pointer">Import data</label>' +
-      '<br><button class="link-btn" id="dedupeBtn">Find &amp; remove duplicates</button>' +
+      '<br><button class="link-btn" id="dedupeBtn">Find &amp; remove duplicates' + (countDuplicates(findDuplicates()) ? ' (' + countDuplicates(findDuplicates()) + ' found)' : '') + '</button>' +
       '<input type="file" id="importInput" accept="application/json" style="display:none">' +
     "</div>" +
     '<div class="section-label">APPEARANCE</div>' +
@@ -3769,6 +3785,7 @@ const SEED_FIXED_FINANCES = [
 ];
 window.SEED_FIXED_FINANCES = SEED_FIXED_FINANCES; // exposed for debugging/testing, same as window.S
 async function seedFixedFinancesOnce() {
+  if (fsReady() || S.settings.firestoreMigrated) return; // shared data exists in the cloud now \u2014 never seed per-device
   if (S.settings.seededFixedFinances) return;
   const today = todayISO();
   for (const item of SEED_FIXED_FINANCES) {
@@ -3814,6 +3831,7 @@ const SEED_STUFF_ITEMS = [
 ];
 window.SEED_STUFF_ITEMS = SEED_STUFF_ITEMS;
 async function seedStuffItemsOnce() {
+  if (fsReady() || S.settings.firestoreMigrated) return; // shared data exists in the cloud now \u2014 never seed per-device
   if (S.settings.seededStuffItems) return;
   for (const item of SEED_STUFF_ITEMS) {
     await saveStuffItem({ id: uid(), title: item.title, content: item.content, createdAt: Date.now() });
@@ -3858,7 +3876,10 @@ async function init() {
 
     await loadAll();
     if (S.categories.length === 0) {
-      for (const c of DEFAULT_CATEGORIES) await saveCategory(c);
+      // Fresh device: show the defaults immediately, but keep them in memory
+      // only. The migration step uploads them only if the shared household
+      // has no categories yet, so a new phone can never overwrite edits.
+      S.categories = DEFAULT_CATEGORIES.map((c) => Object.assign({}, c));
     }
 
     render(); // instant first paint from local data, same as always
